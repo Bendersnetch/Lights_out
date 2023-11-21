@@ -48,11 +48,11 @@ Retour      : signification des valeurs retournées
 
 ## Repartition des taches (Tina, Hugo, Federico)
 - Création du menu, et la gestion des grille (Hugo)
-- Création du Gamedesign, userInterface, IHM (?)
+- Création du Gamedesign, userInterface, IHM (Federico)
     - Grille
     - Bouton 
-    - partit en cours (???)
-- Deplacement dans le jeux (clavier) (???)
+    - partie en cours (???)
+- Deplacement dans le jeux (clavier) (Tina)
 
 
 
