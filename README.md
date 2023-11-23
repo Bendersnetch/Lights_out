@@ -51,7 +51,7 @@ Retour      : signification des valeurs retournées
 - Création du Gamedesign, userInterface, IHM (Federico)
     - Grille
     - Bouton 
-    - partie en cours (???)
+    - partie en cours (Hugo)
 - Deplacement dans le jeux (clavier) (Tina)
 
 
