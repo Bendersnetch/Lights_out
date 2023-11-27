@@ -18,13 +18,13 @@ void initializeGrid(Grid *grid) {
 
     for (int i = 0; i < grid->rows; ++i) {
         for (int j = 0; j < grid->cols; ++j) {
-            grid->lights[i][j] = 0; // All lights off initially
+            grid->lights[i][j] = 0; // toute les lumières sont éteite initialement
         }
     }
 }
 
 void printGrid(Grid *grid) {
-    printw("\nCurrent Grid:\n");
+    printw("\nGrille Courrant\n");
     for (int i = 0; i < grid->rows; ++i) {
         for (int j = 0; j < grid->cols; ++j) {
             if (i == grid->cursorRow && j == grid->cursorCol) {

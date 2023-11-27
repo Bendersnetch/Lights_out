@@ -25,16 +25,16 @@ int main() {
     showTitleScreen();
 
     char *menuChoices[] = {
-        "Start New Game",
-        "Load Game",
-        "Quit"
+        "Nouvelle Partie",
+        "Charger une partie",
+        "Quitter"
     };
 
     int numMenuChoices = sizeof(menuChoices) / sizeof(menuChoices[0]);
 
     do {
         clear();
-        choice = showMenu("Main Menu", menuChoices, numMenuChoices);
+        choice = showMenu("Menu Principal", menuChoices, numMenuChoices);
 
         switch (choice) {
             case 0: // Start New Game
@@ -76,14 +76,14 @@ int main() {
 
                 } while (!gameOver);
 
-                printw("Congratulations! You've turned off all the lights.\n");
+                printw("Félicitation! Tu a allumer tout les lumières.\n");
                 refresh();
                 getch(); // Attendez que l'utilisateur appuie sur une touche pour continuer
             }
             break;
 
             case 1: // Load Game
-                printw("Enter filename to load game: ");
+                printw("Entre le nom du fichier a charger ");
                 refresh();
                 getstr(filename);
                 // Load game function
@@ -93,7 +93,7 @@ int main() {
                 break;
 
             default:
-                printw("Invalid choice. Please try again.\n");
+                printw("Choix invalide. Essaye encore\n");
                 refresh();
         }
 
