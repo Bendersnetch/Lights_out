@@ -54,5 +54,26 @@ Retour      : signification des valeurs retournées
     - partie en cours (Hugo)
 - Déplacement dans le jeux (clavier) (Tina)
 
+# Décisions de Conception
+### Structure du Projet
+ Le projet est organisé en trois fichiers principaux : protos.h, fstc.c, et main.c.
 
+- protos.h : Ce fichier d'en-tête contient la définition de la structure Grid représentant l'état du jeu, ainsi que les prototypes des fonctions associées au jeu et au menu.
 
+- fstc.c : Dans ce fichier source, l'implémentation des fonctions définies dans protos.h est réalisée. Il contient également les fonctions spécifiques à l'affichage du jeu et du menu.
+
+-  main.c : Ce fichier source contient la fonction principale (main) du programme. Il gère l'initialisation du jeu, l'affichage du menu principal et l'appel des fonctions appropriées en fonction des choix de l'utilisateur.
+
+### Structure de Données
+La principale structure de données utilisée est Grid, qui représente l'état de la grille du jeu. Elle contient des informations sur le nombre de lignes et de colonnes, l'état des lumières, ainsi que la position du curseur.
+
+### Fonctions du Jeu
+Les fonctions liées au jeu comprennent l'initialisation de la grille, l'affichage de la grille, la modification de l'état des cellules, la vérification de la fin de partie, ainsi que la sauvegarde et le chargement de parties.
+
+### Fonctions du Menu
+Les fonctions liées au menu sont responsables de l'affichage du menu, de la gestion de la navigation et de la récupération des choix de l'utilisateur.
+
+### Choix d'Interface Utilisateur
+L'utilisation de la bibliothèque ncurses nous permet d'avoir une interface utilisateur agreable (userfriendly). La gestion des menus, la navigation avec les touches fléchées, et l'affichage en mode console sont des exemples de la puissance de cet bibilotheques.
+### Extensions Possibles
+Le code est conçu de manière modulaire pour permettre des extensions futures. Des fonctionnalités telles que la gestion de différentes couleurs, la modification des règles du jeu, ou l'ajout de fonctionnalités de grille non rectangulaire peuvent être envisagées.
