@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <wchar.h>
 #include <ncurses.h>
 #include <unistd.h>
 #include <strings.h>
@@ -8,6 +9,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <strings.h>
+#include <locale.h>
 #include "protos.h"
 
 // Fonction pour afficher un écran titre centré
@@ -21,6 +23,9 @@ int main() {
     srand(time(NULL));
 
     initscr(); // Initialiser la bibliothèque ncurses
+    start_color(); // Activer la couleur
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+    setlocale(LC_ALL, "");
     keypad(stdscr, TRUE);
 
     int choice;

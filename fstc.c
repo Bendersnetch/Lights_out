@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <wchar.h>
 #include <ncurses.h>
 #include <unistd.h>
 #include <strings.h>
@@ -9,15 +10,25 @@
 #include <fcntl.h>
 #include <strings.h>
 #include "protos.h"
+#include <locale.h>
+
+
 
 void playGame(Grid *grid) {
     int gameOver = 0;
     int input;
 
+    // Largeur de chaque case [ ] (ici, 3 caractères)
+    int cellWidth = 3;
+
     do {
         clear();
         printGrid(grid);
-        mvprintw(grid->cursorRow, grid->cursorCol * 2, "\u2588"); // Utilisation de l'Unicode pour un bloc plein
+
+        int startX = (COLS - (grid->cols * 3)) / 2;  // (COLS - largeur_totale_de_la_grille) / 2
+        int startY = (LINES - grid->rows) / 2;  // (LINES - hauteur_totale_de_la_grille) / 2
+
+        mvprintw(startY + grid->cursorRow, startX + grid->cursorCol * 3, "[*]");
         refresh();
 
         input = getch();
@@ -30,9 +41,11 @@ void playGame(Grid *grid) {
                 grid->cursorRow = (grid->cursorRow < grid->rows - 1) ? grid->cursorRow + 1 : grid->rows - 1;
                 break;
             case KEY_LEFT:
+                // Déplacer le curseur d'une case [ ] à une autre
                 grid->cursorCol = (grid->cursorCol > 0) ? grid->cursorCol - 1 : 0;
                 break;
             case KEY_RIGHT:
+                // Déplacer le curseur d'une case [ ] à une autre
                 grid->cursorCol = (grid->cursorCol < grid->cols - 1) ? grid->cursorCol + 1 : grid->cols - 1;
                 break;
             case 10: // Enter key
@@ -47,11 +60,12 @@ void playGame(Grid *grid) {
         }
 
     } while (!gameOver);
-
+    
     printw("Congratulations! You've turned off all the lights.\n");
     refresh();
     getch(); // Attendre que l'utilisateur appuie sur une touche pour continuer
 }
+
 void initializeGrid(Grid *grid) {
     // Initialise la grille avec des lumières allumées ou éteintes de manière aléatoire
     grid->rows = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
@@ -69,13 +83,27 @@ void initializeGrid(Grid *grid) {
 }
 
 void printGrid(Grid *grid) {
+    int startX = (COLS - (grid->cols * 3)) / 2;  // (COLS - largeur_totale_de_la_grille) / 2
+    int startY = (LINES - grid->rows) / 2;  // (LINES - hauteur_totale_de_la_grille) / 2
+
+    start_color();
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK);  // Définir la paire de couleur 1 comme jaune sur fond noir
+
     for (int i = 0; i < grid->rows; ++i) {
         for (int j = 0; j < grid->cols; ++j) {
-            printw("[%c]", (grid->lights[i][j] == 1) ? '*' : ' ');
+            if (grid->lights[i][j] == 1) {
+                attron(COLOR_PAIR(1));
+            }
+            mvprintw(startY + i, startX + j * 3, "[%c]", (grid->lights[i][j] == 1) ? 'X' : ' ');
+
+            if (grid->lights[i][j] == 1) {
+                attroff(COLOR_PAIR(1));
+            }
         }
-        printw("\n");
     }
+    refresh();
 }
+
 
 void toggleCell(Grid *grid, int row, int col) {
     // Change l'état de la cellule et de ses voisins
