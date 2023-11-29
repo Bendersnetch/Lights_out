@@ -11,7 +11,11 @@
 #include "protos.h"
 
 // Fonction pour afficher un écran titre centré
+// Fonction pour afficher un écran titre centré
 void showTitleScreen();
+
+// Fonction pour le gameplay
+void playGame(Grid *grid);
 
 int main() {
     srand(time(NULL));
@@ -25,83 +29,60 @@ int main() {
     showTitleScreen();
 
     char *menuChoices[] = {
-        "Nouvelle Partie",
-        "Charger une partie",
+        "Nouvelle partie",
+        "Charger partie",
+        "Continuer la partie", 
+        "Sauvegarder la partie",
         "Quitter"
     };
 
     int numMenuChoices = sizeof(menuChoices) / sizeof(menuChoices[0]);
 
+    Grid gameGrid;
+    loadAutoSavedGame(&gameGrid, "autosave.txt"); // Charger la sauvegarde automatique
+
     do {
         clear();
-        choice = showMenu("Menu Principal", menuChoices, numMenuChoices);
+        choice = showMenu("Menu principal", menuChoices, numMenuChoices);
 
         switch (choice) {
             case 0: // Start New Game
-            {
-                Grid gameGrid;
                 initializeGrid(&gameGrid);
-
-                int gameOver = 0;
-                int input;
-
-                do {
-                    clear();
-                    printGrid(&gameGrid);
-                    mvprintw(gameGrid.cursorRow, gameGrid.cursorCol * 2, "[*]");
-                    refresh();
-
-                    input = getch();
-
-                    switch (input) {
-                        case KEY_UP:
-                            gameGrid.cursorRow = (gameGrid.cursorRow > 0) ? gameGrid.cursorRow - 1 : 0;
-                            break;
-                        case KEY_DOWN:
-                            gameGrid.cursorRow = (gameGrid.cursorRow < gameGrid.rows - 1) ? gameGrid.cursorRow + 1 : gameGrid.rows - 1;
-                            break;
-                        case KEY_LEFT:
-                            gameGrid.cursorCol = (gameGrid.cursorCol > 0) ? gameGrid.cursorCol - 1 : 0;
-                            break;
-                        case KEY_RIGHT:
-                            gameGrid.cursorCol = (gameGrid.cursorCol < gameGrid.cols - 1) ? gameGrid.cursorCol + 1 : gameGrid.cols - 1;
-                            break;
-                        case 10: // Enter key
-                            toggleCell(&gameGrid, gameGrid.cursorRow, gameGrid.cursorCol);
-                            gameOver = isGameOver(&gameGrid);
-                            break;
-                        default:
-                            break;
-                    }
-
-                } while (!gameOver);
-
-                printw("Félicitation! Tu a allumer tout les lumières.\n");
-                refresh();
-                getch(); // Attendez que l'utilisateur appuie sur une touche pour continuer
-            }
-            break;
-
-            case 1: // Load Game
-                printw("Entre le nom du fichier a charger ");
-                refresh();
-                getstr(filename);
-                // Load game function
+                playGame(&gameGrid);
                 break;
 
-            case 2: // Quit
+            case 1: // Load Game
+                printw("Entrer le nom du fichier a charger");
+                refresh();
+                getstr(filename);
+                loadGame(&gameGrid, filename);
+                playGame(&gameGrid);
+                break;
+
+            case 2: // Continue Game
+                playGame(&gameGrid);
+                break;
+
+            case 3: // Save Game
+                printw("Entrer le nom du fichier a sauvegarder ");
+                refresh();
+                getstr(filename);
+                saveGame(&gameGrid, filename);
+                break;
+
+            case 4: // Quit
                 break;
 
             default:
-                printw("Choix invalide. Essaye encore\n");
+                printw("Choix invalide, ressaye s'il te plait\n");
                 refresh();
         }
 
     } while (choice != numMenuChoices - 1);
 
+    autoSaveGame(&gameGrid, "autosave.txt"); // Sauvegarde automatique avant la sortie
+
     endwin(); // Terminer l'utilisation de la bibliothèque ncurses
 
     return 0;
 }
-
-
