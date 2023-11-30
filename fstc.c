@@ -11,7 +11,7 @@
 #include <strings.h>
 #include "protos.h"
 #include <locale.h>
-
+#include <stdbool.h>  
 
 
 void playGame(Grid *grid) {
@@ -213,12 +213,9 @@ int showMenu(char *title, char *choices[], int numChoices) {
         clear();
 
         attron(A_BOLD);  // Activer le texte en gras
-        // Dessiner la bordure supérieure du titre
-        mvhline((LINES - numChoices) / 2 - 3, (COLS - strlen(title)) / 2 - 2, '-', strlen(title) + 4);
-        // Dessiner le titre avec la bordure latérale
-        mvprintw((LINES - numChoices) / 2 - 2, (COLS - strlen(title)) / 2 - 2, "| %s |", title);
-        // Dessiner la bordure inférieure du titre
-        mvhline((LINES - numChoices) / 2 - 1, (COLS - strlen(title)) / 2 - 2, '-', strlen(title) + 4);        
+        mvhline((LINES - numChoices) / 2 - 3, (COLS - strlen(title)) / 2 - 2, '-', strlen(title) + 4); // Dessiner la bordure supérieure du titre
+        mvprintw((LINES - numChoices) / 2 - 2, (COLS - strlen(title)) / 2 - 2, "| %s |", title);// Dessiner le titre avec la bordure latérale
+        mvhline((LINES - numChoices) / 2 - 1, (COLS - strlen(title)) / 2 - 2, '-', strlen(title) + 4);// Dessiner la bordure inférieure du titre
         attroff(A_BOLD);  // desactive le texte en gras
         
         drawMenu(highlight, choices, numChoices);
@@ -227,12 +224,16 @@ int showMenu(char *title, char *choices[], int numChoices) {
         switch (c) {
             case KEY_UP:
                 if (highlight > 0) {
-                    highlight--;
+                    do {
+                        highlight--;
+                    } while (strlen(choices[highlight]) == 0);  // Ignore les options vides
                 }
                 break;
             case KEY_DOWN:
                 if (highlight < numChoices - 1) {
-                    highlight++;
+                    do {
+                        highlight++;
+                    } while (strlen(choices[highlight]) == 0);  // Ignore les options vides
                 }
                 break;
             case 10: // Enter key
@@ -252,4 +253,13 @@ void showTitleScreen() {
     mvprintw(LINES / 2, (COLS - 10) / 2, "Lights Out");
     refresh();
     getch();
+}
+
+bool hasSaveFile(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file != NULL) {
+        fclose(file);
+        return true;
+    }
+    return false;
 }

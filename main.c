@@ -36,8 +36,8 @@ int main() {
     char *menuChoices[] = {
         "Nouvelle partie",
         "Charger partie",
-        "Continuer la partie", 
-        "Sauvegarder la partie",
+        "Continuer Partie", 
+        "Sauvegarder Partie",
         "Quitter"
     };
 
@@ -48,6 +48,16 @@ int main() {
 
     do {
         clear();
+
+         // Affiche "Continuer Partie" seulement s'il y a un fichier de sauvegarde
+        if (hasSaveFile("autosave.txt")) {
+            menuChoices[2] = "Continuer Partie";
+            menuChoices[3] = "Sauvegarder Partie";
+        } else {
+            menuChoices[2] = "";  // Option vide si pas de sauvegarde
+            menuChoices[3] = "";
+        }
+        
         choice = showMenu("Menu principal", menuChoices, numMenuChoices);
 
         switch (choice) {
@@ -64,16 +74,20 @@ int main() {
                 playGame(&gameGrid);
                 break;
 
-            case 2: // Continue Game
-                playGame(&gameGrid);
-                break;
+            case 2:  // Continue Game
+                if (strlen(menuChoices[2]) > 0) {
+                    playGame(&gameGrid);
+                    break;
+                }
 
             case 3: // Save Game
-                printw("Entrer le nom du fichier a sauvegarder ");
-                refresh();
-                getstr(filename);
-                saveGame(&gameGrid, filename);
-                break;
+                if (hasSaveFile("autosave.txt")){
+                    printw("Entrer le nom du fichier a sauvegarder ");
+                    refresh();
+                    getstr(filename);
+                    saveGame(&gameGrid, filename);
+                    break;
+                }
 
             case 4: // Quit
                 break;
