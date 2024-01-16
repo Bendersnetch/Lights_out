@@ -97,8 +97,8 @@ void initializeGrid(Grid *grid) {
     // grid->rows = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
     // grid->cols = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
 
-    grid->rows = 5;
-    grid->cols = 5;
+    grid->rows = 11;
+    grid->cols = 11;
 
 
     // Allocation dynamique des tableaux 2D
@@ -140,6 +140,11 @@ void initializeCustomGrid(Grid *grid)
             printw("Taille invalide!\n");
         else
             validRows = true;
+    }
+    // Allocation dynamique des tableaux 2D
+    grid->lights = (int **)malloc(grid->rows * sizeof(int *));
+    for (int i = 0; i < grid->rows; ++i) {
+        grid->lights[i] = (int *)malloc(grid->cols * sizeof(int));
     }
 
     for (int i=0; i<10; i++)

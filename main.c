@@ -72,8 +72,8 @@ int main() {
                 break;
 
             case 1: // Create a custom sized game
-                initializeCustomGrid(&gameGrid);
-                playGame(&gameGrid);
+                initializeCustomGrid(grid);
+                playGame(grid);
                 break;
 
             case 2: // Load Game
