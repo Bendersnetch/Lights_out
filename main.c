@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <wchar.h>
-#include <ncurses.h>
+#include <curses.h>
 #include <unistd.h>
 #include <strings.h>
 #include <sys/stat.h>
@@ -12,8 +12,7 @@
 #include <locale.h>
 #include "protos.h"
 
-// Fonction pour afficher un écran titre centré
-// Fonction pour afficher un écran titre centré
+//Centered title screen
 void showTitleScreen();
 
 // Fonction pour le gameplay
@@ -22,8 +21,8 @@ void playGame(Grid *grid);
 int main() {
     srand(time(NULL));
 
-    initscr(); // Initialiser la bibliothèque ncurses
-    start_color(); // Activer la couleur
+    initscr(); // Initialize curses library
+    start_color(); // Activate colors
     init_pair(1, COLOR_YELLOW, COLOR_BLACK);
     setlocale(LC_ALL, "");
     keypad(stdscr, TRUE);
@@ -35,8 +34,9 @@ int main() {
 
     char *menuChoices[] = {
         "Nouvelle partie",
+        "Nouvelle partie a taille choisie",
         "Charger partie",
-        "Continuer Partie", 
+        "Continuer Partie",
         "Sauvegarder Partie",
         "Quitter"
     };
@@ -44,20 +44,20 @@ int main() {
     int numMenuChoices = sizeof(menuChoices) / sizeof(menuChoices[0]);
 
     Grid gameGrid;
-    loadAutoSavedGame(&gameGrid, "autosave.txt"); // Charger la sauvegarde automatique
+    loadAutoSavedGame(&gameGrid, "autosave.txt"); // load a saved game
 
     do {
         clear();
 
-         // Affiche "Continuer Partie" seulement s'il y a un fichier de sauvegarde
+         //Only show "continue" if there's a save file
         if (hasSaveFile("autosave.txt")) {
-            menuChoices[2] = "Continuer Partie";
-            menuChoices[3] = "Sauvegarder Partie";
+            menuChoices[3] = "Continuer Partie";
+            menuChoices[4] = "Sauvegarder Partie";
         } else {
-            menuChoices[2] = "";  // Option vide si pas de sauvegarde
-            menuChoices[3] = "";
+            menuChoices[3] = "";  // Empty option if no file
+            menuChoices[4] = "";
         }
-        
+
         choice = showMenu("Menu principal", menuChoices, numMenuChoices);
 
         switch (choice) {
@@ -66,21 +66,26 @@ int main() {
                 playGame(&gameGrid);
                 break;
 
-            case 1: // Load Game
-                printw("Entrer le nom du fichier a charger");
+            case 1: // Create a custom sized game
+                initializeCustomGrid(&gameGrid);
+                playGame(&gameGrid);
+                break;
+
+            case 2: // Load Game
+                printw("Entrer le nom du fichier a charger ");
                 refresh();
                 getstr(filename);
                 loadGame(&gameGrid, filename);
                 playGame(&gameGrid);
                 break;
 
-            case 2:  // Continue Game
+            case 3:  // Continue Game
                 if (strlen(menuChoices[2]) > 0) {
                     playGame(&gameGrid);
                     break;
                 }
 
-            case 3: // Save Game
+            case 4: // Save Game
                 if (hasSaveFile("autosave.txt")){
                     printw("Entrer le nom du fichier a sauvegarder ");
                     refresh();
@@ -89,7 +94,7 @@ int main() {
                     break;
                 }
 
-            case 4: // Quit
+            case 5: // Quit
                 break;
 
             default:
@@ -99,9 +104,9 @@ int main() {
 
     } while (choice != numMenuChoices - 1);
 
-    autoSaveGame(&gameGrid, "autosave.txt"); // Sauvegarde automatique avant la sortie
+    autoSaveGame(&gameGrid, "autosave.txt"); // Autoload when exiting the game
 
-    endwin(); // Terminer l'utilisation de la bibliothèque ncurses
+    endwin(); // Stop curses library utilization
 
     return 0;
 }

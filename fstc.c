@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <wchar.h>
-#include <ncurses.h>
+#include <curses.h>
 #include <unistd.h>
 #include <strings.h>
 #include <sys/stat.h>
@@ -11,7 +11,10 @@
 #include <strings.h>
 #include "protos.h"
 #include <locale.h>
-#include <stdbool.h>  
+#include <stdbool.h>
+
+#define MAX_SIZE 11
+#define MIN_SIZE 4
 
 
 void playGame(Grid *grid) {
@@ -28,8 +31,7 @@ void playGame(Grid *grid) {
         int startX = (COLS - (grid->cols * 3)) / 2;  // (COLS - largeur_totale_de_la_grille) / 2
         int startY = (LINES - grid->rows) / 2;  // (LINES - hauteur_totale_de_la_grille) / 2
 
-        mvprintw(startY + grid->cursorRow, startX + grid->cursorCol * 3, "[*]");
-        refresh();
+        printCursor(grid);
 
         input = getch();
 
@@ -60,7 +62,7 @@ void playGame(Grid *grid) {
         }
 
     } while (!gameOver);
-    
+
     printw("Congratulations! You've turned off all the lights.\n");
     refresh();
     getch(); // Attendre que l'utilisateur appuie sur une touche pour continuer
@@ -82,6 +84,47 @@ void initializeGrid(Grid *grid) {
     grid->cursorCol = 0;
 }
 
+void initializeCustomGrid(Grid *grid)
+{
+    //Ask for the grid size
+    bool validCols = false, validRows = false;
+    int randRow, randCol;
+    while (!validCols)
+    {
+        printw("rentrez le nombre de colonnes ");
+        scanw("%i", &grid->cols);
+        if (grid->cols < MIN_SIZE || grid->cols > MAX_SIZE)
+            printw("Taille invalide!\n");
+        else
+            validCols = true;
+
+    }
+    while (!validRows)
+    {
+        printw("\nrentrez le nombre de lignes ");
+        scanw("%i", &grid->rows);
+        if (grid->rows < MIN_SIZE || grid->rows > MAX_SIZE)
+            printw("Taille invalide!\n");
+        else
+            validRows = true;
+    }
+
+    for (int i=0; i<10; i++)
+    {
+        printf("execution numero %i ", i);
+        randRow = rand() % (grid->rows);
+        randCol = rand() % (grid->cols);
+        printf("row : %i ", randRow);
+        printf("col : %i\n", randCol);
+        toggleCell(grid, randRow , randCol );
+    }
+
+    // Initialise le curseur au coin supérieur gauche
+    grid->cursorRow = 0;
+    grid->cursorCol = 0;
+
+}
+
 void printGrid(Grid *grid) {
     int startX = (COLS - (grid->cols * 3)) / 2;  // (COLS - largeur_totale_de_la_grille) / 2
     int startY = (LINES - grid->rows) / 2;  // (LINES - hauteur_totale_de_la_grille) / 2
@@ -93,13 +136,34 @@ void printGrid(Grid *grid) {
         for (int j = 0; j < grid->cols; ++j) {
             if (grid->lights[i][j] == 1) {
                 attron(COLOR_PAIR(1));
-            }
-            mvprintw(startY + i, startX + j * 3, "[%c]", (grid->lights[i][j] == 1) ? 'X' : ' ');
-
-            if (grid->lights[i][j] == 1) {
+                mvprintw(startY + i, startX + j * 3, "[%c]", (grid->lights[i][j] == 1) ? 'X' : ' ');
                 attroff(COLOR_PAIR(1));
             }
+
+            else {
+                mvprintw(startY + i, startX + j * 3, "[%c]", (grid->lights[i][j] == 1) ? 'X' : ' ');
+            }
         }
+    }
+    refresh();
+}
+
+void printCursor(Grid *grid)
+{
+    int startX = (COLS - (grid->cols * 3)) / 2;  // (COLS - largeur_totale_de_la_grille) / 2
+    int startY = (LINES - grid->rows) / 2;  // (LINES - hauteur_totale_de_la_grille) / 2
+    start_color();
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+    if (grid->lights[grid->cursorRow][grid->cursorCol] == 1)
+    {
+        attron(COLOR_PAIR(1));
+        mvprintw(startY + grid->cursorRow, startX + grid->cursorCol * 3, "[*]");
+        attroff(COLOR_PAIR(1));
+    }
+
+    else
+    {
+        mvprintw(startY + grid->cursorRow, startX + grid->cursorCol * 3, "[*]");
     }
     refresh();
 }
@@ -217,7 +281,7 @@ int showMenu(char *title, char *choices[], int numChoices) {
         mvprintw((LINES - numChoices) / 2 - 2, (COLS - strlen(title)) / 2 - 2, "| %s |", title);// Dessiner le titre avec la bordure latérale
         mvhline((LINES - numChoices) / 2 - 1, (COLS - strlen(title)) / 2 - 2, '-', strlen(title) + 4);// Dessiner la bordure inférieure du titre
         attroff(A_BOLD);  // desactive le texte en gras
-        
+
         drawMenu(highlight, choices, numChoices);
 
         c = getch();
