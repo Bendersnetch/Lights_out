@@ -43,8 +43,14 @@ int main() {
 
     int numMenuChoices = sizeof(menuChoices) / sizeof(menuChoices[0]);
 
-    Grid gameGrid;
-    loadAutoSavedGame(&gameGrid, "autosave.txt"); // load a saved game
+     // Initialisation de la structure Grid avec malloc
+    Grid *grid = (Grid *)malloc(sizeof(Grid));
+    if (grid == NULL) {
+        perror("Erreur d'allocation mémoire");
+        endwin();
+        return 1;
+    }
+    loadAutoSavedGame(grid, "autosave.txt"); // Charger la sauvegarde automatique
 
     do {
         clear();
@@ -59,11 +65,10 @@ int main() {
         }
 
         choice = showMenu("Menu principal", menuChoices, numMenuChoices);
-
         switch (choice) {
             case 0: // Start New Game
-                initializeGrid(&gameGrid);
-                playGame(&gameGrid);
+                initializeGrid(grid);
+                playGame(grid);
                 break;
 
             case 1: // Create a custom sized game
@@ -75,13 +80,13 @@ int main() {
                 printw("Entrer le nom du fichier a charger ");
                 refresh();
                 getstr(filename);
-                loadGame(&gameGrid, filename);
-                playGame(&gameGrid);
+                loadGame(grid, filename);
+                playGame(grid);
                 break;
 
             case 3:  // Continue Game
                 if (strlen(menuChoices[2]) > 0) {
-                    playGame(&gameGrid);
+                    playGame(grid);
                     break;
                 }
 
@@ -90,7 +95,7 @@ int main() {
                     printw("Entrer le nom du fichier a sauvegarder ");
                     refresh();
                     getstr(filename);
-                    saveGame(&gameGrid, filename);
+                    saveGame(grid, filename);
                     break;
                 }
 
@@ -104,7 +109,12 @@ int main() {
 
     } while (choice != numMenuChoices - 1);
 
-    autoSaveGame(&gameGrid, "autosave.txt"); // Autoload when exiting the game
+    // Libération de la mémoire allouée dynamiquement
+    for (int i = 0; i < grid->rows; ++i) {
+        free(grid->lights[i]);
+    }
+    free(grid->lights);
+    free(grid);
 
     endwin(); // Stop curses library utilization
 

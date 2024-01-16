@@ -17,6 +17,12 @@
 #define MIN_SIZE 4
 
 
+/**
+ * Represente le gameplay de la partit, LE JEUX EN GROS !!!
+ * @author Hugo
+ * @brief Gameplay du jeux
+ * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
+*/
 void playGame(Grid *grid) {
     int gameOver = 0;
     int input;
@@ -26,6 +32,20 @@ void playGame(Grid *grid) {
 
     do {
         clear();
+        // Afficher le nom du jeu au-dessus de la grille
+        mvprintw((LINES - grid->rows) / 2 - 5, (COLS - 10) / 2, "Lights Out");
+
+        mvprintw((LINES - grid->rows) / 2 - 1, 3, "Instructions: ");
+        mvprintw((LINES - grid->rows) / 2 + 1, 3, "<-|-> : Utilisez les flèches pour vous déplacer");
+        mvprintw((LINES - grid->rows) / 2 + 2, 3, "Enter : Appuyez sur Entrée pour valider");
+        mvprintw((LINES - grid->rows) / 2 + 3, 3, "Esc : Retour au menu principal");
+
+        // Afficher les règles à droite de la grille
+        mvprintw((LINES - grid->rows) / 2, COLS - 35, "Rules:");
+        mvprintw((LINES - grid->rows) / 2 + 1, COLS - 35, "Turn off all lights to win");
+
+
+        //affiche la grille de jeux
         printGrid(grid);
 
         int startX = (COLS - (grid->cols * 3)) / 2;  // (COLS - largeur_totale_de_la_grille) / 2
@@ -53,7 +73,7 @@ void playGame(Grid *grid) {
             case 10: // Enter key
                 toggleCell(grid, grid->cursorRow, grid->cursorCol);
                 gameOver = isGameOver(grid);
-                autoSaveGame(grid, "autosave.txt"); // Sauvegarde automatique pendant le jeu
+                saveGame(grid, "autosave.txt"); //Sauvegarde automatique pendant le jeu
                 break;
             case 27: // Escape key
                 return; // Revenir au menu
@@ -67,19 +87,32 @@ void playGame(Grid *grid) {
     refresh();
     getch(); // Attendre que l'utilisateur appuie sur une touche pour continuer
 }
-
+/**
+ * initialisation de la grille de jeux
+ * @author Hugo
+ * @brief initialisation d'une grille
+ * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
+*/
 void initializeGrid(Grid *grid) {
-    // Initialise la grille avec des lumières allumées ou éteintes de manière aléatoire
-    grid->rows = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
-    grid->cols = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
+    // grid->rows = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
+    // grid->cols = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
+
+    grid->rows = 5;
+    grid->cols = 5;
+
+
+    // Allocation dynamique des tableaux 2D
+    grid->lights = (int **)malloc(grid->rows * sizeof(int *));
+    for (int i = 0; i < grid->rows; ++i) {
+        grid->lights[i] = (int *)malloc(grid->cols * sizeof(int));
+    }
 
     for (int i = 0; i < grid->rows; ++i) {
         for (int j = 0; j < grid->cols; ++j) {
-            grid->lights[i][j] = rand() % 2; // 0 pour éteint, 1 pour allumé
+            grid->lights[i][j] = rand() % 2;
         }
     }
 
-    // Initialise le curseur au coin supérieur gauche
     grid->cursorRow = 0;
     grid->cursorCol = 0;
 }
@@ -189,7 +222,14 @@ void toggleCell(Grid *grid, int row, int col) {
         grid->lights[row][col + 1] = 1 - grid->lights[row][col + 1];
     }
 }
-
+/**
+ * Permet de verifier sur le jeux est finis ou pas, GROSOMODO REGARDER SI LES LUMIERES SONT ETEINTES
+ * @author Hugo
+ * @brief Toutes les ligts eteintes ? 
+ * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
+ * @param row --> int : ligne de la grille
+ * @param col --> int : colonne de la grille
+*/
 int isGameOver(Grid *grid) {
     // Vérifie si toutes les lumières sont éteintes
     for (int i = 0; i < grid->rows; ++i) {
@@ -202,7 +242,13 @@ int isGameOver(Grid *grid) {
 
     return 1; // Le jeu est terminé
 }
-
+/**
+ * Permet de sauvegarder la partit dans un fichier 
+ * @author Hugo
+ * @brief sauvegarde de l'utilisateur de la partit
+ * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
+ * @param *filename --> char : nom du ficher a sauvegarder (autosave.txt)
+*/
 void saveGame(Grid *grid, char *filename) {
     FILE *file = fopen(filename, "w");
     if (file != NULL) {
@@ -214,22 +260,53 @@ void saveGame(Grid *grid, char *filename) {
             fprintf(file, "\n");
         }
         fclose(file);
-        printw("Game saved successfully!\n");
+        
+        // Mettre à jour la variable saveSuccess
+        grid->saveSuccess = 1;
+
+        mvprintw(LINES - 1, 0, "Game saved successfully!");
+        refresh();
+        // usleep(300000); // Pause de 0.3 seconde (en microsecondes)
     } else {
-        printw("Error saving game.\n");
+        // Mettre à jour la variable saveSuccess
+        grid->saveSuccess = 0;
+
+        mvprintw(LINES - 1, 0, "Error saving game.");
+        refresh();
+        usleep(300000); // Pause de 0.3 seconde (en microsecondes)
     }
+    clear();  // Effacer le message après la pause
     refresh();
 }
-
-void autoSaveGame(Grid *grid, char *filename) {
-    // Sauvegarde automatique de la partie en cours
-    saveGame(grid, filename);
-}
-
+/**
+ * Permet de sauvegarder la grille a chaque modification 
+ * @author Hugo
+ * @brief sauvegarde automatique de la partit
+ * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
+ * @param *filname --> char :  nom du fichier dans le quelle la sauvegarde auto se fait
+*/
+// void autoSaveGame(Grid *grid, char *filename) {
+//     // Sauvegarde automatique de la partie en cours
+//     saveGame(grid, filename);
+// }
+/**
+ * Permet de chager le fichier qui contient les infos de la grille
+ * @author Hugo
+ * @brief chargement de l'utilisateur de la partit
+ * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
+ * @param *filename --> char : nom du fichuer a charger
+*/
 void loadGame(Grid *grid, char *filename) {
     FILE *file = fopen(filename, "r");
     if (file != NULL) {
         fscanf(file, "%d %d", &(grid->rows), &(grid->cols));
+
+        // Allocation dynamique des tableaux 2D
+        grid->lights = (int **)malloc(grid->rows * sizeof(int *));
+        for (int i = 0; i < grid->rows; ++i) {
+            grid->lights[i] = (int *)malloc(grid->cols * sizeof(int));
+        }
+
         for (int i = 0; i < grid->rows; ++i) {
             for (int j = 0; j < grid->cols; ++j) {
                 fscanf(file, "%d", &(grid->lights[i][j]));
@@ -242,12 +319,25 @@ void loadGame(Grid *grid, char *filename) {
     }
     refresh();
 }
-
+/**
+ * Permet de charger automatiquement au lanchement du jeux le fichier qui contient les infos de la grille
+ * @author Hugo
+ * @brief chargement automatique de la partit
+ * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
+ * @param *filename --> char : nom du fichier a charger
+*/
 void loadAutoSavedGame(Grid *grid, char *filename) {
     // Charger automatiquement la partie précédemment sauvegardée
     loadGame(grid, filename);
 }
-
+/**
+ * Represente l'ensemble des options du menu, en mettant en surbrillance le choix selectioner
+ * @author Hugo
+ * @brief Effet visuel du menu
+ * @param highlight --> int : tableau des choix du menue (Nouvell Partie, Continue...)
+ * @param *choices[] --> char : tableau de chaînes de caractères représentant les différentes options du menu.
+ * @param numChoices --> int 
+*/
 void drawMenu(int highlight, char *choices[], int numChoices) {
     int x, y, i;
 
@@ -256,9 +346,9 @@ void drawMenu(int highlight, char *choices[], int numChoices) {
 
     for (i = 0; i < numChoices; ++i) {
         if (highlight == i) {
-            attron(A_REVERSE);
+            attron(A_REVERSE); //surbrillance on
             mvprintw(y, x, "  > %s", choices[i]); // Ajout de l'espace avant l'option sélectionnée
-            attroff(A_REVERSE);
+            attroff(A_REVERSE); //surbrillance off
         } else {
             mvprintw(y, x, "   %s", choices[i]); // Ajout de l'espace avant les autres options
         }
@@ -268,6 +358,14 @@ void drawMenu(int highlight, char *choices[], int numChoices) {
     refresh();
 }
 
+/**
+ * Utilisation de ncurses pour mise en page (gras, couleur, centrage etc...)
+ * @author Hugo
+ * @brief Affiche le menu
+ * @param *title -> char : Titre Menue Principal 
+ * @param *choices[] -> char : tableau des choix du menue (Nouvell Partie, Continue...)
+ * @param numChoices -> int :  représente le nombre d'options dans le menu
+*/
 int showMenu(char *title, char *choices[], int numChoices) {
     int highlight = 0;
     int choice;
@@ -312,6 +410,11 @@ int showMenu(char *title, char *choices[], int numChoices) {
     return choice;
 }
 
+/**
+ * Permet d'afficher Light's Out au milleu de l'ecran au dememrrage du jeux
+ * @author Hugo
+ * @brief Affiche Lights out au demarrage du jeux
+ */
 void showTitleScreen() {
     clear();
     mvprintw(LINES / 2, (COLS - 10) / 2, "Lights Out");
@@ -319,6 +422,12 @@ void showTitleScreen() {
     getch();
 }
 
+/**
+ * verifie si le fichier d'autosave existe (permet de savoir quand on doit afficher continuer, et sauver la partit)
+ * @author Hugo
+ * @brief Fichier de sauvegarder existant ?
+ * @param *filename -> char : le nom du fichier 
+*/
 bool hasSaveFile(const char *filename) {
     FILE *file = fopen(filename, "r");
     if (file != NULL) {
