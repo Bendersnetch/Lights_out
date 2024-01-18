@@ -67,11 +67,13 @@ int main() {
         choice = showMenu("Menu principal", menuChoices, numMenuChoices);
         switch (choice) {
             case 0: // Start New Game
+                initializeLightsDefault(grid);
                 initializeGrid(grid);
                 playGame(grid);
                 break;
 
             case 1: // Create a custom sized game
+                initializeLightsCustom(grid);
                 initializeCustomGrid(grid);
                 playGame(grid);
                 break;
@@ -80,12 +82,14 @@ int main() {
                 printw("Entrer le nom du fichier a charger ");
                 refresh();
                 getstr(filename);
+                //initializeLights (grid);
                 loadGame(grid, filename);
                 playGame(grid);
                 break;
 
             case 3:  // Continue Game
                 if (strlen(menuChoices[2]) > 0) {
+                    //initializeLights (grid);
                     playGame(grid);
                     break;
                 }
@@ -114,6 +118,7 @@ int main() {
         free(grid->lights[i]);
     }
     free(grid->lights);
+
     free(grid);
 
     endwin(); // Stop curses library utilization

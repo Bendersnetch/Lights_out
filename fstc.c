@@ -35,10 +35,10 @@ void playGame(Grid *grid) {
         // Afficher le nom du jeu au-dessus de la grille
         mvprintw((LINES - grid->rows) / 2 - 5, (COLS - 10) / 2, "Lights Out");
 
-        mvprintw((LINES - grid->rows) / 2 - 1, 3, "Instructions: ");
-        mvprintw((LINES - grid->rows) / 2 + 1, 3, "<-|-> : Utilisez les flèches pour vous déplacer");
-        mvprintw((LINES - grid->rows) / 2 + 2, 3, "Enter : Appuyez sur Entrée pour valider");
-        mvprintw((LINES - grid->rows) / 2 + 3, 3, "Esc : Retour au menu principal");
+//        mvprintw((LINES - grid->rows) / 2 - 1, 3, "Instructions: ");
+//        mvprintw((LINES - grid->rows) / 2 + 1, 3, "<-|-> : Utilisez les flèches pour vous déplacer");
+//        mvprintw((LINES - grid->rows) / 2 + 2, 3, "Enter : Appuyez sur Entrée pour valider");
+//        mvprintw((LINES - grid->rows) / 2 + 3, 3, "Esc : Retour au menu principal");
 
         // Afficher les règles à droite de la grille
         mvprintw((LINES - grid->rows) / 2, COLS - 35, "Rules:");
@@ -97,29 +97,75 @@ void initializeGrid(Grid *grid) {
     // grid->rows = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
     // grid->cols = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
 
+
+
     grid->rows = 11;
     grid->cols = 11;
 
+//    for (int i = 0; i < grid->rows; i++) {
+//        for (int j = 0; j < grid->cols; j++) {
+//            grid->lights[i][j] = 0;
+//        }
+//    }
 
-    // Allocation dynamique des tableaux 2D
-    grid->lights = (int **)malloc(grid->rows * sizeof(int *));
-    for (int i = 0; i < grid->rows; ++i) {
-        grid->lights[i] = (int *)malloc(grid->cols * sizeof(int));
-    }
-
-    for (int i = 0; i < grid->rows; ++i) {
-        for (int j = 0; j < grid->cols; ++j) {
-            grid->lights[i][j] = rand() % 2;
-        }
+    for (int i = 0; i < grid->rows * grid->cols; ++i) {
+        toggleCell(grid, rand() % grid->rows , rand() % grid->cols);
     }
 
     grid->cursorRow = 0;
     grid->cursorCol = 0;
+
+
 }
 
 void initializeCustomGrid(Grid *grid)
 {
     //Ask for the grid size
+
+
+
+
+    // Initialise le curseur au coin supérieur gauche
+    grid->cursorRow = 0;
+    grid->cursorCol = 0;
+
+}
+
+//    for (int i=0; i<10; i++)
+//    {
+//        printf("execution numero %i ", i);
+//        randRow = rand() % (grid->rows);
+//        randCol = rand() % (grid->cols);
+//        printf("row : %i ", randRow);
+//        printf("col : %i\n", randCol);
+//        toggleCell(grid, randRow , randCol );
+//    }
+
+void initializeLightsDefault (Grid *grid)
+{
+    grid->cols = MAX_SIZE;
+    grid->rows = MAX_SIZE;
+
+    // Allocation dynamique des tableaux 2D
+    grid->lights = (int **)malloc(11 * sizeof(int *));
+    for (int i = 0; i < 11; ++i) {
+        grid->lights[i] = (int *)malloc(11* sizeof(int));
+        for (int j=0; j<11; j++)
+            grid->lights[i][j]=0;
+    }
+
+
+    for (int i=0; i<11; i++)
+    {
+        for (int j=0; j<11; j++)
+            printf("%d  ", grid->lights[i][j]) ;
+        printf("\n") ;
+    }
+}
+
+void initializeLightsCustom (Grid *grid)
+{
+
     bool validCols = false, validRows = false;
     int randRow, randCol;
     while (!validCols)
@@ -141,31 +187,22 @@ void initializeCustomGrid(Grid *grid)
         else
             validRows = true;
     }
+
+
     // Allocation dynamique des tableaux 2D
     grid->lights = (int **)malloc(grid->rows * sizeof(int *));
     for (int i = 0; i < grid->rows; ++i) {
         grid->lights[i] = (int *)malloc(grid->cols * sizeof(int));
+        for (int j=0; j < grid->cols; j++)
+            grid->lights[i][j]=0;
+
     }
-
-    for (int i=0; i<10; i++)
-    {
-        printf("execution numero %i ", i);
-        randRow = rand() % (grid->rows);
-        randCol = rand() % (grid->cols);
-        printf("row : %i ", randRow);
-        printf("col : %i\n", randCol);
-        toggleCell(grid, randRow , randCol );
-    }
-
-    // Initialise le curseur au coin supérieur gauche
-    grid->cursorRow = 0;
-    grid->cursorCol = 0;
-
 }
 
 void printGrid(Grid *grid) {
     int startX = (COLS - (grid->cols * 3)) / 2;  // (COLS - largeur_totale_de_la_grille) / 2
     int startY = (LINES - grid->rows) / 2;  // (LINES - hauteur_totale_de_la_grille) / 2
+    printf("%i %i", startX, startY);
 
     start_color();
     init_pair(1, COLOR_YELLOW, COLOR_BLACK);  // Définir la paire de couleur 1 comme jaune sur fond noir
@@ -230,7 +267,7 @@ void toggleCell(Grid *grid, int row, int col) {
 /**
  * Permet de verifier sur le jeux est finis ou pas, GROSOMODO REGARDER SI LES LUMIERES SONT ETEINTES
  * @author Hugo
- * @brief Toutes les ligts eteintes ? 
+ * @brief Toutes les ligts eteintes ?
  * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
  * @param row --> int : ligne de la grille
  * @param col --> int : colonne de la grille
@@ -248,7 +285,7 @@ int isGameOver(Grid *grid) {
     return 1; // Le jeu est terminé
 }
 /**
- * Permet de sauvegarder la partit dans un fichier 
+ * Permet de sauvegarder la partit dans un fichier
  * @author Hugo
  * @brief sauvegarde de l'utilisateur de la partit
  * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
@@ -265,7 +302,7 @@ void saveGame(Grid *grid, char *filename) {
             fprintf(file, "\n");
         }
         fclose(file);
-        
+
         // Mettre à jour la variable saveSuccess
         grid->saveSuccess = 1;
 
@@ -284,16 +321,16 @@ void saveGame(Grid *grid, char *filename) {
     refresh();
 }
 /**
- * Permet de sauvegarder la grille a chaque modification 
+ * Permet de sauvegarder la grille a chaque modification
  * @author Hugo
  * @brief sauvegarde automatique de la partit
  * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
  * @param *filname --> char :  nom du fichier dans le quelle la sauvegarde auto se fait
 */
-// void autoSaveGame(Grid *grid, char *filename) {
-//     // Sauvegarde automatique de la partie en cours
-//     saveGame(grid, filename);
-// }
+ void autoSaveGame(Grid *grid, char *filename) {
+     // Sauvegarde automatique de la partie en cours
+     saveGame(grid, filename);
+ }
 /**
  * Permet de chager le fichier qui contient les infos de la grille
  * @author Hugo
@@ -341,7 +378,7 @@ void loadAutoSavedGame(Grid *grid, char *filename) {
  * @brief Effet visuel du menu
  * @param highlight --> int : tableau des choix du menue (Nouvell Partie, Continue...)
  * @param *choices[] --> char : tableau de chaînes de caractères représentant les différentes options du menu.
- * @param numChoices --> int 
+ * @param numChoices --> int
 */
 void drawMenu(int highlight, char *choices[], int numChoices) {
     int x, y, i;
@@ -367,7 +404,7 @@ void drawMenu(int highlight, char *choices[], int numChoices) {
  * Utilisation de ncurses pour mise en page (gras, couleur, centrage etc...)
  * @author Hugo
  * @brief Affiche le menu
- * @param *title -> char : Titre Menue Principal 
+ * @param *title -> char : Titre Menue Principal
  * @param *choices[] -> char : tableau des choix du menue (Nouvell Partie, Continue...)
  * @param numChoices -> int :  représente le nombre d'options dans le menu
 */
@@ -431,7 +468,7 @@ void showTitleScreen() {
  * verifie si le fichier d'autosave existe (permet de savoir quand on doit afficher continuer, et sauver la partit)
  * @author Hugo
  * @brief Fichier de sauvegarder existant ?
- * @param *filename -> char : le nom du fichier 
+ * @param *filename -> char : le nom du fichier
 */
 bool hasSaveFile(const char *filename) {
     FILE *file = fopen(filename, "r");

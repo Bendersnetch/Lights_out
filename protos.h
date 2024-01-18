@@ -16,6 +16,8 @@ typedef struct {
 // Game's prototype functions
 void initializeGrid(Grid *grid);
 void initializeCustomGrid(Grid *grid);
+void initializeLightsDefault (Grid *grid);
+void initializeLightsCustom (Grid *grid);
 void printGrid(Grid *grid);
 void printCursor(Grid *grid);
 void toggleCell(Grid *grid, int row, int col);
