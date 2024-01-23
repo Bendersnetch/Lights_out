@@ -10,7 +10,7 @@ typedef struct {
     int moves;
     int cursorRow;
     int cursorCol;
-    int **lights;  // Utilisation d'un double pointeur pour allouer dynamiquement des tableaux 2D
+    int **lights;  // Used to allocate the memory dynamicly
     int saveSuccess;
 } Grid;
 

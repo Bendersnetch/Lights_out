@@ -15,7 +15,7 @@
 //Centered title screen
 void showTitleScreen();
 
-// Fonction pour le gameplay
+// Fonction for the gameplay
 void playGame(Grid *grid);
 
 int main() {
@@ -44,14 +44,14 @@ int main() {
 
     int numMenuChoices = sizeof(menuChoices) / sizeof(menuChoices[0]);
 
-     // Initialisation de la structure Grid avec malloc
+     // Initialize the grid with malloc
     Grid *grid = (Grid *)malloc(sizeof(Grid));
     if (grid == NULL) {
-        perror("Erreur d'allocation mémoire");
+        perror("Error while allocating memory");
         endwin();
         return 1;
     }
-    loadGame(grid, "autosave.txt"); // Charger la sauvegarde automatique
+    loadGame(grid, "autosave.txt"); // Load the autosave
 
     do {
         clear();
@@ -68,8 +68,6 @@ int main() {
         choice = showMenu("Main menu", menuChoices, numMenuChoices);
         switch (choice) {
             case 0: // Start New Game
-//                initializeGrid(grid);
-//                playGame(grid);
                 chooseSize(grid);
                 break;
 
@@ -115,7 +113,7 @@ int main() {
 
     } while (choice != numMenuChoices - 1);
 
-    // Libération de la mémoire allouée dynamiquement
+    // Free the used memory
     for (int i = 0; i < grid->rows; ++i) {
         free(grid->lights[i]);
     }
