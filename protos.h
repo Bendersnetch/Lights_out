@@ -7,6 +7,7 @@
 typedef struct {
     int rows;
     int cols;
+    int moves;
     int cursorRow;
     int cursorCol;
     int **lights;  // Utilisation d'un double pointeur pour allouer dynamiquement des tableaux 2D
@@ -14,10 +15,9 @@ typedef struct {
 } Grid;
 
 // Game's prototype functions
+void chooseSize(Grid *grid);
 void initializeGrid(Grid *grid);
 void initializeCustomGrid(Grid *grid);
-void initializeLightsDefault (Grid *grid);
-void initializeLightsCustom (Grid *grid);
 void printGrid(Grid *grid);
 void printCursor(Grid *grid);
 void toggleCell(Grid *grid, int row, int col);

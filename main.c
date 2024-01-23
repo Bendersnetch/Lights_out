@@ -22,6 +22,7 @@ int main() {
     srand(time(NULL));
 
     initscr(); // Initialize curses library
+    curs_set(0);
     start_color(); // Activate colors
     init_pair(1, COLOR_YELLOW, COLOR_BLACK);
     setlocale(LC_ALL, "");
@@ -33,12 +34,12 @@ int main() {
     showTitleScreen();
 
     char *menuChoices[] = {
-        "Nouvelle partie",
-        "Nouvelle partie a taille choisie",
-        "Charger partie",
-        "Continuer Partie",
-        "Sauvegarder Partie",
-        "Quitter"
+        "New game",
+        "New custom game",
+        "Load game",
+        "Continue game",
+        "Save Game",
+        "Leave"
     };
 
     int numMenuChoices = sizeof(menuChoices) / sizeof(menuChoices[0]);
@@ -50,55 +51,56 @@ int main() {
         endwin();
         return 1;
     }
-    loadAutoSavedGame(grid, "autosave.txt"); // Charger la sauvegarde automatique
+    loadGame(grid, "autosave.txt"); // Charger la sauvegarde automatique
 
     do {
         clear();
 
          //Only show "continue" if there's a save file
         if (hasSaveFile("autosave.txt")) {
-            menuChoices[3] = "Continuer Partie";
-            menuChoices[4] = "Sauvegarder Partie";
+            menuChoices[3] = "Continue game";
+            menuChoices[4] = "Save Game";
         } else {
             menuChoices[3] = "";  // Empty option if no file
             menuChoices[4] = "";
         }
 
-        choice = showMenu("Menu principal", menuChoices, numMenuChoices);
+        choice = showMenu("Main menu", menuChoices, numMenuChoices);
         switch (choice) {
             case 0: // Start New Game
-                initializeLightsDefault(grid);
-                initializeGrid(grid);
-                playGame(grid);
+//                initializeGrid(grid);
+//                playGame(grid);
+                chooseSize(grid);
                 break;
 
             case 1: // Create a custom sized game
-                initializeLightsCustom(grid);
                 initializeCustomGrid(grid);
                 playGame(grid);
                 break;
 
             case 2: // Load Game
-                printw("Entrer le nom du fichier a charger ");
+                curs_set(2);
+                printw("Enter the file name ");
                 refresh();
                 getstr(filename);
-                //initializeLights (grid);
+                curs_set(0);
                 loadGame(grid, filename);
                 playGame(grid);
                 break;
 
             case 3:  // Continue Game
                 if (strlen(menuChoices[2]) > 0) {
-                    //initializeLights (grid);
                     playGame(grid);
                     break;
                 }
 
             case 4: // Save Game
                 if (hasSaveFile("autosave.txt")){
-                    printw("Entrer le nom du fichier a sauvegarder ");
+                    curs_set(2);
+                    printw("Enter the file name to save ");
                     refresh();
                     getstr(filename);
+                    curs_set(0);
                     saveGame(grid, filename);
                     break;
                 }
@@ -107,7 +109,7 @@ int main() {
                 break;
 
             default:
-                printw("Choix invalide, ressaye s'il te plait\n");
+                printw("Invalid choice, please retry.\n");
                 refresh();
         }
 

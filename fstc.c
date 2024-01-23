@@ -27,29 +27,24 @@ void playGame(Grid *grid) {
     int gameOver = 0;
     int input;
 
-    // Largeur de chaque case [ ] (ici, 3 caractères)
-    int cellWidth = 3;
-
     do {
         clear();
         // Afficher le nom du jeu au-dessus de la grille
         mvprintw((LINES - grid->rows) / 2 - 5, (COLS - 10) / 2, "Lights Out");
+        mvprintw((LINES - grid->rows) / 2 - 4, (COLS - 27) / 2, "You have already done %d moves", grid->moves);
 
-//        mvprintw((LINES - grid->rows) / 2 - 1, 3, "Instructions: ");
-//        mvprintw((LINES - grid->rows) / 2 + 1, 3, "<-|-> : Utilisez les flèches pour vous déplacer");
-//        mvprintw((LINES - grid->rows) / 2 + 2, 3, "Enter : Appuyez sur Entrée pour valider");
-//        mvprintw((LINES - grid->rows) / 2 + 3, 3, "Esc : Retour au menu principal");
+        mvprintw((LINES - grid->rows) / 2 - 1, 3, "Instructions: ");
+        mvprintw((LINES - grid->rows) / 2 + 1, 3, "Use the arrows to navigate");
+        mvprintw((LINES - grid->rows) / 2 + 3, 3, "Press enter to change a light's state");
+        mvprintw((LINES - grid->rows) / 2 + 5, 3, "Press esc to return t the menu");
 
         // Afficher les règles à droite de la grille
-        mvprintw((LINES - grid->rows) / 2, COLS - 35, "Rules:");
+        mvprintw((LINES - grid->rows) / 2 - 1, COLS - 35, "Rules:");
         mvprintw((LINES - grid->rows) / 2 + 1, COLS - 35, "Turn off all lights to win");
 
 
         //affiche la grille de jeux
         printGrid(grid);
-
-        int startX = (COLS - (grid->cols * 3)) / 2;  // (COLS - largeur_totale_de_la_grille) / 2
-        int startY = (LINES - grid->rows) / 2;  // (LINES - hauteur_totale_de_la_grille) / 2
 
         printCursor(grid);
 
@@ -71,11 +66,13 @@ void playGame(Grid *grid) {
                 grid->cursorCol = (grid->cursorCol < grid->cols - 1) ? grid->cursorCol + 1 : grid->cols - 1;
                 break;
             case 10: // Enter key
+                grid->moves++;
                 toggleCell(grid, grid->cursorRow, grid->cursorCol);
                 gameOver = isGameOver(grid);
                 saveGame(grid, "autosave.txt"); //Sauvegarde automatique pendant le jeu
                 break;
             case 27: // Escape key
+                saveGame(grid, "autosave.txt");
                 return; // Revenir au menu
             default:
                 break;
@@ -83,10 +80,39 @@ void playGame(Grid *grid) {
 
     } while (!gameOver);
 
-    printw("Congratulations! You've turned off all the lights.\n");
+    clear();
+    printw("Congratulations! You've turned off all the lights in %d moves.\n", grid->moves);
     refresh();
     getch(); // Attendre que l'utilisateur appuie sur une touche pour continuer
 }
+
+void chooseSize (Grid *grid)
+{
+    int choice;
+    char *choiceList[] = {"4 x 4", "5 x 5", "6 x 6"};
+    choice = showMenu("Choose the size", choiceList, sizeof(choiceList) / sizeof(choiceList[0]));
+    switch(choice)
+    {
+        case 0: //4*4
+            grid->cols = 4;
+            grid->rows = 4;
+            break;
+
+        case 1: //5*5
+            grid->cols = 5;
+            grid->rows = 5;
+            break;
+
+        case 2: //6*6
+            grid->cols = 6;
+            grid->rows = 6;
+            break;
+    }
+
+    initializeGrid(grid);
+    playGame(grid);
+}
+
 /**
  * initialisation de la grille de jeux
  * @author Hugo
@@ -94,22 +120,19 @@ void playGame(Grid *grid) {
  * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
 */
 void initializeGrid(Grid *grid) {
-    // grid->rows = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
-    // grid->cols = MIN_SIZE + rand() % (MAX_SIZE - MIN_SIZE + 1);
 
+    grid->moves = 0;
 
+    grid->lights = (int **)malloc(grid->rows * sizeof(int *));
+    for (int i = 0; i < grid->rows; ++i) {
+        grid->lights[i] = (int *)malloc(grid->rows* sizeof(int));
+        for (int j=0; j<grid->cols; j++)
+            grid->lights[i][j]=0;
+    }
 
-    grid->rows = 11;
-    grid->cols = 11;
-
-//    for (int i = 0; i < grid->rows; i++) {
-//        for (int j = 0; j < grid->cols; j++) {
-//            grid->lights[i][j] = 0;
-//        }
-//    }
-
-    for (int i = 0; i < grid->rows * grid->cols; ++i) {
-        toggleCell(grid, rand() % grid->rows , rand() % grid->cols);
+    for (int i=0; i < grid->rows * grid->cols; i++)
+    {
+        toggleCell(grid, rand() % (grid->rows) , rand() % (grid->cols) );
     }
 
     grid->cursorRow = 0;
@@ -122,72 +145,31 @@ void initializeCustomGrid(Grid *grid)
 {
     //Ask for the grid size
 
-
-
-
-    // Initialise le curseur au coin supérieur gauche
-    grid->cursorRow = 0;
-    grid->cursorCol = 0;
-
-}
-
-//    for (int i=0; i<10; i++)
-//    {
-//        printf("execution numero %i ", i);
-//        randRow = rand() % (grid->rows);
-//        randCol = rand() % (grid->cols);
-//        printf("row : %i ", randRow);
-//        printf("col : %i\n", randCol);
-//        toggleCell(grid, randRow , randCol );
-//    }
-
-void initializeLightsDefault (Grid *grid)
-{
-    grid->cols = MAX_SIZE;
-    grid->rows = MAX_SIZE;
-
-    // Allocation dynamique des tableaux 2D
-    grid->lights = (int **)malloc(11 * sizeof(int *));
-    for (int i = 0; i < 11; ++i) {
-        grid->lights[i] = (int *)malloc(11* sizeof(int));
-        for (int j=0; j<11; j++)
-            grid->lights[i][j]=0;
-    }
-
-
-    for (int i=0; i<11; i++)
-    {
-        for (int j=0; j<11; j++)
-            printf("%d  ", grid->lights[i][j]) ;
-        printf("\n") ;
-    }
-}
-
-void initializeLightsCustom (Grid *grid)
-{
-
     bool validCols = false, validRows = false;
-    int randRow, randCol;
+
+    curs_set(2);
     while (!validCols)
     {
-        printw("rentrez le nombre de colonnes ");
+        printw("Enter the number of columns ");
         scanw("%i", &grid->cols);
         if (grid->cols < MIN_SIZE || grid->cols > MAX_SIZE)
-            printw("Taille invalide!\n");
+            printw("Invalid size!\n");
         else
             validCols = true;
 
     }
     while (!validRows)
     {
-        printw("\nrentrez le nombre de lignes ");
+        printw("\nEnter the number of rows ");
         scanw("%i", &grid->rows);
         if (grid->rows < MIN_SIZE || grid->rows > MAX_SIZE)
-            printw("Taille invalide!\n");
+            printw("Invalid size!\n");
         else
             validRows = true;
     }
+    curs_set(0);
 
+    grid->moves = 0;
 
     // Allocation dynamique des tableaux 2D
     grid->lights = (int **)malloc(grid->rows * sizeof(int *));
@@ -197,12 +179,21 @@ void initializeLightsCustom (Grid *grid)
             grid->lights[i][j]=0;
 
     }
+
+    for (int i=0; i < grid->rows * grid->cols; i++)
+    {
+        toggleCell(grid, rand() % (grid->rows) , rand() % (grid->cols) );
+    }
+
+    // Initialise le curseur au coin supérieur gauche
+    grid->cursorRow = 0;
+    grid->cursorCol = 0;
+
 }
 
 void printGrid(Grid *grid) {
     int startX = (COLS - (grid->cols * 3)) / 2;  // (COLS - largeur_totale_de_la_grille) / 2
     int startY = (LINES - grid->rows) / 2;  // (LINES - hauteur_totale_de_la_grille) / 2
-    printf("%i %i", startX, startY);
 
     start_color();
     init_pair(1, COLOR_YELLOW, COLOR_BLACK);  // Définir la paire de couleur 1 comme jaune sur fond noir
@@ -232,13 +223,17 @@ void printCursor(Grid *grid)
     if (grid->lights[grid->cursorRow][grid->cursorCol] == 1)
     {
         attron(COLOR_PAIR(1));
-        mvprintw(startY + grid->cursorRow, startX + grid->cursorCol * 3, "[*]");
+        attron(A_BOLD);
+        mvprintw(startY + grid->cursorRow, startX + grid->cursorCol * 3, "[#]");
+        attroff(A_BOLD);
         attroff(COLOR_PAIR(1));
     }
 
     else
     {
-        mvprintw(startY + grid->cursorRow, startX + grid->cursorCol * 3, "[*]");
+        attron(A_BOLD);
+        mvprintw(startY + grid->cursorRow, startX + grid->cursorCol * 3, "[#]");
+        attroff(A_BOLD);
     }
     refresh();
 }
@@ -294,7 +289,7 @@ int isGameOver(Grid *grid) {
 void saveGame(Grid *grid, char *filename) {
     FILE *file = fopen(filename, "w");
     if (file != NULL) {
-        fprintf(file, "%d %d\n", grid->rows, grid->cols);
+        fprintf(file, "%d %d %d\n", grid->rows, grid->cols, grid->moves);
         for (int i = 0; i < grid->rows; ++i) {
             for (int j = 0; j < grid->cols; ++j) {
                 fprintf(file, "%d ", grid->lights[i][j]);
@@ -341,13 +336,15 @@ void saveGame(Grid *grid, char *filename) {
 void loadGame(Grid *grid, char *filename) {
     FILE *file = fopen(filename, "r");
     if (file != NULL) {
-        fscanf(file, "%d %d", &(grid->rows), &(grid->cols));
+        fscanf(file, "%d %d %d", &(grid->rows), &(grid->cols), &(grid->moves));
 
-        // Allocation dynamique des tableaux 2D
-        grid->lights = (int **)malloc(grid->rows * sizeof(int *));
-        for (int i = 0; i < grid->rows; ++i) {
-            grid->lights[i] = (int *)malloc(grid->cols * sizeof(int));
-        }
+    grid->lights = (int **)malloc(grid->rows * sizeof(int *));
+    for (int i = 0; i < grid->rows; ++i) {
+        grid->lights[i] = (int *)malloc(grid->cols * sizeof(int));
+        for (int j=0; j < grid->cols; j++)
+            grid->lights[i][j]=0;
+
+    }
 
         for (int i = 0; i < grid->rows; ++i) {
             for (int j = 0; j < grid->cols; ++j) {
@@ -360,17 +357,6 @@ void loadGame(Grid *grid, char *filename) {
         printw("Error loading game.\n");
     }
     refresh();
-}
-/**
- * Permet de charger automatiquement au lanchement du jeux le fichier qui contient les infos de la grille
- * @author Hugo
- * @brief chargement automatique de la partit
- * @param *grid --> Grid : accedes a la structure grid (cursorRow,cursorCol...)
- * @param *filename --> char : nom du fichier a charger
-*/
-void loadAutoSavedGame(Grid *grid, char *filename) {
-    // Charger automatiquement la partie précédemment sauvegardée
-    loadGame(grid, filename);
 }
 /**
  * Represente l'ensemble des options du menu, en mettant en surbrillance le choix selectioner
