@@ -1,22 +1,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <ncurses.h>
+#include <wchar.h>
+#include <curses.h>
 #include <unistd.h>
 #include <strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <strings.h>
+#include <locale.h>
 #include "protos.h"
 
-// Fonction pour afficher un écran titre centré
+#define rowPrompt LINES / 2 - 1
+#define colPrompt COLS / 2 - 15
+
+// Centered title screen
 void showTitleScreen();
 
-int main() {
+// Fonction for the gameplay
+void playGame(Grid *grid);
+
+int main()
+{
     srand(time(NULL));
 
-    initscr(); // Initialiser la bibliothèque ncurses
+    initscr(); // Initialize curses library
+    curs_set(0);
+    start_color(); // Activate colors
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+    setlocale(LC_ALL, "");
     keypad(stdscr, TRUE);
 
     int choice;
@@ -25,83 +38,105 @@ int main() {
     showTitleScreen();
 
     char *menuChoices[] = {
-        "Nouvelle Partie",
-        "Charger une partie",
-        "Quitter"
-    };
+        "New game",
+        "New custom game",
+        "Load game",
+        "Continue game",
+        "Save Game",
+        "Leave"};
 
     int numMenuChoices = sizeof(menuChoices) / sizeof(menuChoices[0]);
 
-    do {
+    // Initialize the grid with malloc
+    Grid *grid = (Grid *)malloc(sizeof(Grid));
+    if (grid == NULL)
+    {
+        perror("Error while allocating memory");
+        endwin();
+        return 1;
+    }
+
+    do
+    {
         clear();
-        choice = showMenu("Menu Principal", menuChoices, numMenuChoices);
 
-        switch (choice) {
-            case 0: // Start New Game
-            {
-                Grid gameGrid;
-                initializeGrid(&gameGrid);
+        // Only show "continue" if there's a save file
+        if (hasSaveFile("autosave.txt"))
+        {
+            menuChoices[3] = "Continue game";
+            menuChoices[4] = "Save Game";
+        }
+        else
+        {
+            menuChoices[3] = ""; // Empty option if no file
+            menuChoices[4] = "";
+        }
 
-                int gameOver = 0;
-                int input;
-
-                do {
-                    clear();
-                    printGrid(&gameGrid);
-                    mvprintw(gameGrid.cursorRow, gameGrid.cursorCol * 2, "[*]");
-                    refresh();
-
-                    input = getch();
-
-                    switch (input) {
-                        case KEY_UP:
-                            gameGrid.cursorRow = (gameGrid.cursorRow > 0) ? gameGrid.cursorRow - 1 : 0;
-                            break;
-                        case KEY_DOWN:
-                            gameGrid.cursorRow = (gameGrid.cursorRow < gameGrid.rows - 1) ? gameGrid.cursorRow + 1 : gameGrid.rows - 1;
-                            break;
-                        case KEY_LEFT:
-                            gameGrid.cursorCol = (gameGrid.cursorCol > 0) ? gameGrid.cursorCol - 1 : 0;
-                            break;
-                        case KEY_RIGHT:
-                            gameGrid.cursorCol = (gameGrid.cursorCol < gameGrid.cols - 1) ? gameGrid.cursorCol + 1 : gameGrid.cols - 1;
-                            break;
-                        case 10: // Enter key
-                            toggleCell(&gameGrid, gameGrid.cursorRow, gameGrid.cursorCol);
-                            gameOver = isGameOver(&gameGrid);
-                            break;
-                        default:
-                            break;
-                    }
-
-                } while (!gameOver);
-
-                printw("Félicitation! Tu a allumer tout les lumières.\n");
-                refresh();
-                getch(); // Attendez que l'utilisateur appuie sur une touche pour continuer
-            }
+        choice = showMenu("Main menu", menuChoices, numMenuChoices);
+        switch (choice)
+        {
+        case 0: // Start New Game
+            chooseSize(grid);
             break;
 
-            case 1: // Load Game
-                printw("Entre le nom du fichier a charger ");
+        case 1: // Create a custom sized game
+            chooseCustomSize(grid);
+            break;
+
+        case 2: // Load Game
+            clear();
+            curs_set(2);
+            mvprintw(LINES / 2 - 4 , COLS / 2 - 37, "If the selected file is incorrect, you will be redirected to the current game. ");
+            mvprintw(rowPrompt, colPrompt, "Enter the file name: ");
+            refresh();
+            getstr(filename);
+            curs_set(0);
+            loadGame(grid, filename);
+            playGame(grid);
+            break;
+
+        case 3:                             // Continue Game
+            loadGame(grid, "autosave.txt"); // Load the autosave
+            if (strlen(menuChoices[2]) > 0)
+            {
+                playGame(grid);
+                break;
+            }
+
+        case 4: // Save Game
+            loadGame(grid, "autosave.txt"); // Load the autosave
+            if (hasSaveFile("autosave.txt"))
+            {
+                clear();
+                curs_set(2);
+                mvprintw(rowPrompt, colPrompt,("Enter the file name to save:  "));
                 refresh();
                 getstr(filename);
-                // Load game function
+                curs_set(0);
+                saveGame(grid, filename);
                 break;
+            }
 
-            case 2: // Quit
-                break;
+        case 5: // Quit
+            break;
 
-            default:
-                printw("Choix invalide. Essaye encore\n");
-                refresh();
+        default:
+            printw("Invalid choice, please retry.\n");
+            refresh();
         }
 
     } while (choice != numMenuChoices - 1);
 
-    endwin(); // Terminer l'utilisation de la bibliothèque ncurses
+    // Free the used memory
+    for (int i = 0; i < grid->rows; ++i)
+    {
+        free(grid->lights[i]);
+    }
+    free(grid->lights);
+
+    free(grid);
+
+    endwin(); // Stop curses library utilization
 
     return 0;
 }
-
-
