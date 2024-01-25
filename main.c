@@ -12,13 +12,17 @@
 #include <locale.h>
 #include "protos.h"
 
-//Centered title screen
+#define rowPrompt LINES / 2 - 1
+#define colPrompt COLS / 2 - 15
+
+// Centered title screen
 void showTitleScreen();
 
 // Fonction for the gameplay
 void playGame(Grid *grid);
 
-int main() {
+int main()
+{
     srand(time(NULL));
 
     initscr(); // Initialize curses library
@@ -39,82 +43,93 @@ int main() {
         "Load game",
         "Continue game",
         "Save Game",
-        "Leave"
-    };
+        "Leave"};
 
     int numMenuChoices = sizeof(menuChoices) / sizeof(menuChoices[0]);
 
-     // Initialize the grid with malloc
+    // Initialize the grid with malloc
     Grid *grid = (Grid *)malloc(sizeof(Grid));
-    if (grid == NULL) {
+    if (grid == NULL)
+    {
         perror("Error while allocating memory");
         endwin();
         return 1;
     }
-    loadGame(grid, "autosave.txt"); // Load the autosave
 
-    do {
+    do
+    {
         clear();
 
-         //Only show "continue" if there's a save file
-        if (hasSaveFile("autosave.txt")) {
+        // Only show "continue" if there's a save file
+        if (hasSaveFile("autosave.txt"))
+        {
             menuChoices[3] = "Continue game";
             menuChoices[4] = "Save Game";
-        } else {
-            menuChoices[3] = "";  // Empty option if no file
+        }
+        else
+        {
+            menuChoices[3] = ""; // Empty option if no file
             menuChoices[4] = "";
         }
 
         choice = showMenu("Main menu", menuChoices, numMenuChoices);
-        switch (choice) {
-            case 0: // Start New Game
-                chooseSize(grid);
-                break;
+        switch (choice)
+        {
+        case 0: // Start New Game
+            chooseSize(grid);
+            break;
 
-            case 1: // Create a custom sized game
-                initializeCustomGrid(grid);
+        case 1: // Create a custom sized game
+            chooseCustomSize(grid);
+            break;
+
+        case 2: // Load Game
+            clear();
+            curs_set(2);
+            mvprintw(LINES / 2 - 4 , COLS / 2 - 37, "If the selected file is incorrect, you will be redirected to the current game. ");
+            mvprintw(rowPrompt, colPrompt, "Enter the file name: ");
+            refresh();
+            getstr(filename);
+            curs_set(0);
+            loadGame(grid, filename);
+            playGame(grid);
+            break;
+
+        case 3:                             // Continue Game
+            loadGame(grid, "autosave.txt"); // Load the autosave
+            if (strlen(menuChoices[2]) > 0)
+            {
                 playGame(grid);
                 break;
+            }
 
-            case 2: // Load Game
+        case 4: // Save Game
+            loadGame(grid, "autosave.txt"); // Load the autosave
+            if (hasSaveFile("autosave.txt"))
+            {
+                clear();
                 curs_set(2);
-                printw("Enter the file name ");
+                mvprintw(rowPrompt, colPrompt,("Enter the file name to save:  "));
                 refresh();
                 getstr(filename);
                 curs_set(0);
-                loadGame(grid, filename);
-                playGame(grid);
+                saveGame(grid, filename);
                 break;
+            }
 
-            case 3:  // Continue Game
-                if (strlen(menuChoices[2]) > 0) {
-                    playGame(grid);
-                    break;
-                }
+        case 5: // Quit
+            break;
 
-            case 4: // Save Game
-                if (hasSaveFile("autosave.txt")){
-                    curs_set(2);
-                    printw("Enter the file name to save ");
-                    refresh();
-                    getstr(filename);
-                    curs_set(0);
-                    saveGame(grid, filename);
-                    break;
-                }
-
-            case 5: // Quit
-                break;
-
-            default:
-                printw("Invalid choice, please retry.\n");
-                refresh();
+        default:
+            printw("Invalid choice, please retry.\n");
+            refresh();
         }
 
     } while (choice != numMenuChoices - 1);
 
     // Free the used memory
-    for (int i = 0; i < grid->rows; ++i) {
+    for (int i = 0; i < grid->rows; ++i)
+    {
         free(grid->lights[i]);
     }
     free(grid->lights);

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <wchar.h>
-#include <curses.h>
+#include <ncurses.h>
 #include <unistd.h>
 #include <strings.h>
 #include <sys/stat.h>
@@ -16,18 +16,19 @@
 #define MAX_SIZE 11
 #define MIN_SIZE 4
 
-
 /**
  * Base gameplay function
  * @author Hugo, Federico
  * @brief Gameplay
  * @param *grid --> Grid : uses the grid structure (cursorRow,cursorCol...)
-*/
-void playGame(Grid *grid) {
+ */
+void playGame(Grid *grid)
+{
     int gameOver = 0;
     int input;
 
-    do {
+    do
+    {
         clear();
         // Show the name and moves count
         mvprintw((LINES - grid->rows) / 2 - 5, (COLS - 10) / 2, "Lights Out");
@@ -42,37 +43,37 @@ void playGame(Grid *grid) {
         mvprintw((LINES - grid->rows) / 2 - 1, COLS - 35, "Rules:");
         mvprintw((LINES - grid->rows) / 2 + 1, COLS - 35, "Turn off all lights to win");
 
-
-        //show the game grid
+        // show the game grid
         printGrid(grid);
 
         printCursor(grid);
 
         input = getch();
 
-        switch (input) {
-            case KEY_UP:
-                grid->cursorRow = (grid->cursorRow > 0) ? grid->cursorRow - 1 : 0;
-                break;
-            case KEY_DOWN:
-                grid->cursorRow = (grid->cursorRow < grid->rows - 1) ? grid->cursorRow + 1 : grid->rows - 1;
-                break;
-            case KEY_LEFT:
-                grid->cursorCol = (grid->cursorCol > 0) ? grid->cursorCol - 1 : 0;
-                break;
-            case KEY_RIGHT:
-                grid->cursorCol = (grid->cursorCol < grid->cols - 1) ? grid->cursorCol + 1 : grid->cols - 1;
-                break;
-            case 10: // Enter key
-                grid->moves++;
-                toggleCell(grid, grid->cursorRow, grid->cursorCol);
-                gameOver = isGameOver(grid);
-                break;
-            case 27: // Escape key
-                saveGame(grid, "autosave.txt");
-                return; // Returns to the menu
-            default:
-                break;
+        switch (input)
+        {
+        case KEY_UP:
+            grid->cursorRow = (grid->cursorRow > 0) ? grid->cursorRow - 1 : 0;
+            break;
+        case KEY_DOWN:
+            grid->cursorRow = (grid->cursorRow < grid->rows - 1) ? grid->cursorRow + 1 : grid->rows - 1;
+            break;
+        case KEY_LEFT:
+            grid->cursorCol = (grid->cursorCol > 0) ? grid->cursorCol - 1 : 0;
+            break;
+        case KEY_RIGHT:
+            grid->cursorCol = (grid->cursorCol < grid->cols - 1) ? grid->cursorCol + 1 : grid->cols - 1;
+            break;
+        case 10: // Enter key
+            grid->moves++;
+            toggleCell(grid, grid->cursorRow, grid->cursorCol);
+            gameOver = isGameOver(grid);
+            break;
+        case 27: // Escape key
+            saveGame(grid, "autosave.txt");
+            return; // Returns to the menu
+        default:
+            break;
         }
 
     } while (!gameOver);
@@ -87,31 +88,82 @@ void playGame(Grid *grid) {
  * @author Federico
  * @brief size Menu
  * @param *grid --> Grid : uses the grid structure (rows,cols)
-*/
-void chooseSize (Grid *grid)
+ */
+void chooseSize(Grid *grid)
 {
     int choice;
     char *choiceList[] = {"4 x 4", "5 x 5", "6 x 6"};
     choice = showMenu("Choose the size", choiceList, sizeof(choiceList) / sizeof(choiceList[0]));
-    switch(choice)
+    switch (choice)
     {
-        case 0: //4*4
-            grid->cols = 4;
-            grid->rows = 4;
-            break;
+    case 0: // 4*4
+        grid->cols = 4;
+        grid->rows = 4;
+        break;
 
-        case 1: //5*5
-            grid->cols = 5;
-            grid->rows = 5;
-            break;
+    case 1: // 5*5
+        grid->cols = 5;
+        grid->rows = 5;
+        break;
 
-        case 2: //6*6
-            grid->cols = 6;
-            grid->rows = 6;
-            break;
+    case 2: // 6*6
+        grid->cols = 6;
+        grid->rows = 6;
+        break;
     }
 
     initializeGrid(grid);
+    playGame(grid);
+}
+
+/**
+ * Secondary menu used to choose the size of the custom grid game
+ * @author Hugo
+ * @brief size Menu
+ * @param *grid --> Grid : uses the grid structure (rows,cols)
+ */
+void chooseCustomSize(Grid *grid)
+{
+    clear();
+    mvprintw(LINES / 2 - 4 , COLS / 2 - 15, "CHOOSE CUSTOM SIZE");
+    bool validCols = false, validRows = false;
+
+    curs_set(2);
+
+    int maxCols = COLS / 2;
+    int maxRows = LINES / 2;
+
+    int colPrompt = maxCols - 20; // Calculer la position horizontale du texte
+    int rowPrompt = maxRows - 1;  // Calculer la position verticale du texte
+
+    while (!validCols)
+    {
+        mvprintw(rowPrompt, colPrompt, "Enter the number of columns ");
+        scanw("%i", &grid->cols);
+        if (grid->cols < MIN_SIZE)
+            mvprintw(rowPrompt + 1, colPrompt, "Invalid size! Too small, try a value higher than %d", MIN_SIZE);
+        else if (grid->cols > MAX_SIZE)
+            mvprintw(rowPrompt + 1, colPrompt, "Invalid size! Too big, try a value smaller than %d", MAX_SIZE);
+        else
+            validCols = true;
+    }
+
+    while (!validRows)
+    {
+        mvprintw(rowPrompt + 2, colPrompt, "Enter the number of rows ");
+        scanw("%i", &grid->rows);
+        if (grid->rows < MIN_SIZE)
+            mvprintw(rowPrompt + 3, colPrompt, "Invalid size! Too small, try a value higher than %d", MIN_SIZE);
+        else if (grid->rows > MAX_SIZE)
+            mvprintw(rowPrompt + 3, colPrompt, "Invalid size! Too big, try a value smaller than %d", MAX_SIZE);
+        else
+            validRows = true;
+    }
+
+    curs_set(0);
+
+    grid->moves = 0;
+    initializeCustomGrid(grid);
     playGame(grid);
 }
 
@@ -120,30 +172,30 @@ void chooseSize (Grid *grid)
  * @author Hugo, Federico
  * @brief initilaize base grid
  * @param *grid --> Grid : uses the grid structure (rows,cols...)
-*/
-void initializeGrid(Grid *grid) {
+ */
+void initializeGrid(Grid *grid)
+{
 
     grid->moves = 0;
 
     // dynamic allocation for the grid
     grid->lights = (int **)malloc(grid->rows * sizeof(int *));
-    for (int i = 0; i < grid->rows; ++i) {
-        grid->lights[i] = (int *)malloc(grid->rows* sizeof(int));
-        for (int j=0; j<grid->cols; j++)
-            grid->lights[i][j]=0;
+    for (int i = 0; i < grid->rows; ++i)
+    {
+        grid->lights[i] = (int *)malloc(grid->rows * sizeof(int));
+        for (int j = 0; j < grid->cols; j++)
+            grid->lights[i][j] = 0;
     }
 
-    //randomize the grid lights
-    for (int i=0; i < grid->rows * grid->cols; i++)
+    // randomize the grid lights
+    for (int i = 0; i < grid->rows * grid->cols; i++)
     {
-        toggleCell(grid, rand() % (grid->rows) , rand() % (grid->cols) );
+        toggleCell(grid, rand() % (grid->rows), rand() % (grid->cols));
     }
 
     // Initialize the cursor in the top left corner
     grid->cursorRow = 0;
     grid->cursorCol = 0;
-
-
 }
 
 /**
@@ -151,60 +203,27 @@ void initializeGrid(Grid *grid) {
  * @author Federico
  * @brief initilaize custom grid
  * @param *grid --> Grid : uses the grid structure (rows,cols...)
-*/
+ */
 void initializeCustomGrid(Grid *grid)
 {
-    //Ask for the grid size
-
-    bool validCols = false, validRows = false;
-
-    curs_set(2);
-    while (!validCols)
-    {
-        printw("Enter the number of columns ");
-        scanw("%i", &grid->cols);
-        if (grid->cols < MIN_SIZE)
-            printw("Invalid size! Too small, try a value higher than %d\n", MIN_SIZE);
-        else if (grid->cols > MAX_SIZE)
-            printw("Invalid size! Too big, try a value smaller than %d\n", MAX_SIZE);
-        else
-            validCols = true;
-
-    }
-    while (!validRows)
-    {
-        printw("\nEnter the number of rows ");
-        scanw("%i", &grid->rows);
-        if (grid->rows < MIN_SIZE)
-            printw("Invalid size! Too small, try a value higher than %d\n", MIN_SIZE);
-        else if (grid->rows > MAX_SIZE)
-            printw("Invalid size! Too big, try a value smaller than %d\n", MAX_SIZE);
-        else
-            validRows = true;
-    }
-    curs_set(0);
-
-    grid->moves = 0;
-
     // dynamic allocation for the grid
     grid->lights = (int **)malloc(grid->rows * sizeof(int *));
-    for (int i = 0; i < grid->rows; ++i) {
+    for (int i = 0; i < grid->rows; ++i)
+    {
         grid->lights[i] = (int *)malloc(grid->cols * sizeof(int));
-        for (int j=0; j < grid->cols; j++)
-            grid->lights[i][j]=0;
-
+        for (int j = 0; j < grid->cols; j++)
+            grid->lights[i][j] = 0;
     }
 
-    //randomize the grid lights
-    for (int i=0; i < grid->rows * grid->cols; i++)
+    // randomize the grid lights
+    for (int i = 0; i < grid->rows * grid->cols; i++)
     {
-        toggleCell(grid, rand() % (grid->rows) , rand() % (grid->cols) );
+        toggleCell(grid, rand() % (grid->rows), rand() % (grid->cols));
     }
 
     // Initialize the cursor in the top left corner
     grid->cursorRow = 0;
     grid->cursorCol = 0;
-
 }
 
 /**
@@ -212,23 +231,28 @@ void initializeCustomGrid(Grid *grid)
  * @author Hugo
  * @brief show grid
  * @param *grid --> Grid : uses the grid structure (rows,cols...)
-*/
-void printGrid(Grid *grid) {
+ */
+void printGrid(Grid *grid)
+{
     int startX = (COLS - (grid->cols * 3)) / 2;
     int startY = (LINES - grid->rows) / 2;
 
     start_color();
-    init_pair(1, COLOR_YELLOW, COLOR_BLACK);  // Defines the color combination (yellow and black)
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK); // Defines the color combination (yellow and black)
 
-    for (int i = 0; i < grid->rows; ++i) {
-        for (int j = 0; j < grid->cols; ++j) {
-            if (grid->lights[i][j] == 1) {
+    for (int i = 0; i < grid->rows; ++i)
+    {
+        for (int j = 0; j < grid->cols; ++j)
+        {
+            if (grid->lights[i][j] == 1)
+            {
                 attron(COLOR_PAIR(1));
                 mvprintw(startY + i, startX + j * 3, "[%c]", (grid->lights[i][j] == 1) ? 'X' : ' ');
                 attroff(COLOR_PAIR(1));
             }
 
-            else {
+            else
+            {
                 mvprintw(startY + i, startX + j * 3, "[%c]", (grid->lights[i][j] == 1) ? 'X' : ' ');
             }
         }
@@ -241,7 +265,7 @@ void printGrid(Grid *grid) {
  * @author Federico
  * @brief show cursor
  * @param *grid --> Grid : uses the grid structure (rows,cols...)
-*/
+ */
 void printCursor(Grid *grid)
 {
     int startX = (COLS - (grid->cols * 3)) / 2;
@@ -271,24 +295,29 @@ void printCursor(Grid *grid)
  * @author Hugo
  * @brief change light
  * @param *grid --> Grid : uses the grid structure (rows,cols...)
-*/
-void toggleCell(Grid *grid, int row, int col) {
+ */
+void toggleCell(Grid *grid, int row, int col)
+{
     // Change the light state and his neighbours state
     grid->lights[row][col] = 1 - grid->lights[row][col];
 
-    if (row > 0) {
+    if (row > 0)
+    {
         grid->lights[row - 1][col] = 1 - grid->lights[row - 1][col];
     }
 
-    if (row < grid->rows - 1) {
+    if (row < grid->rows - 1)
+    {
         grid->lights[row + 1][col] = 1 - grid->lights[row + 1][col];
     }
 
-    if (col > 0) {
+    if (col > 0)
+    {
         grid->lights[row][col - 1] = 1 - grid->lights[row][col - 1];
     }
 
-    if (col < grid->cols - 1) {
+    if (col < grid->cols - 1)
+    {
         grid->lights[row][col + 1] = 1 - grid->lights[row][col + 1];
     }
 }
@@ -298,11 +327,15 @@ void toggleCell(Grid *grid, int row, int col) {
  * @author Hugo
  * @brief LightsOff?
  * @param *grid --> Grid : uses the grid structure (rows,cols...)
-*/
-int isGameOver(Grid *grid) {
-    for (int i = 0; i < grid->rows; ++i) {
-        for (int j = 0; j < grid->cols; ++j) {
-            if (grid->lights[i][j] == 1) {
+ */
+int isGameOver(Grid *grid)
+{
+    for (int i = 0; i < grid->rows; ++i)
+    {
+        for (int j = 0; j < grid->cols; ++j)
+        {
+            if (grid->lights[i][j] == 1)
+            {
                 return 0; // Game isn't over
             }
         }
@@ -316,13 +349,17 @@ int isGameOver(Grid *grid) {
  * @brief save
  * @param *grid --> Grid : uses the grid structure (rows,cols...)
  * @param *filename --> char : file's name (autosave.txt)
-*/
-void saveGame(Grid *grid, char *filename) {
+ */
+void saveGame(Grid *grid, char *filename)
+{
     FILE *file = fopen(filename, "w");
-    if (file != NULL) {
+    if (file != NULL)
+    {
         fprintf(file, "%d %d %d\n", grid->rows, grid->cols, grid->moves);
-        for (int i = 0; i < grid->rows; ++i) {
-            for (int j = 0; j < grid->cols; ++j) {
+        for (int i = 0; i < grid->rows; ++i)
+        {
+            for (int j = 0; j < grid->cols; ++j)
+            {
                 fprintf(file, "%d ", grid->lights[i][j]);
             }
             fprintf(file, "\n");
@@ -334,16 +371,16 @@ void saveGame(Grid *grid, char *filename) {
 
         mvprintw(LINES - 1, 0, "Game saved successfully!");
         refresh();
-        // usleep(300000); // Pause for 0.3 seconds
-    } else {
+    }
+    else
+    {
         // Change the success variable
         grid->saveSuccess = 0;
 
         mvprintw(LINES - 1, 0, "Error saving game.");
         refresh();
-        usleep(300000); // Pause for 0.3 seconds
     }
-    clear();  // erase the message after 0.3 seconds
+    clear(); // erase the message after 0.3 seconds
     refresh();
 }
 
@@ -353,29 +390,38 @@ void saveGame(Grid *grid, char *filename) {
  * @brief load
  * @param *grid --> Grid : uses the grid structure (rows,cols...)
  * @param *filename --> char : file's name (autosave.txt)
-*/
-void loadGame(Grid *grid, char *filename) {
+ */
+void loadGame(Grid *grid, char *filename)
+{
+    int rowPrompt = LINES / 2 - 1;
+    int colPrompt = COLS / 2 - 15;
     FILE *file = fopen(filename, "r");
-    if (file != NULL) {
+    if (file != NULL)
+    {
         fscanf(file, "%d %d %d", &(grid->rows), &(grid->cols), &(grid->moves));
 
-    grid->lights = (int **)malloc(grid->rows * sizeof(int *));
-    for (int i = 0; i < grid->rows; ++i) {
-        grid->lights[i] = (int *)malloc(grid->cols * sizeof(int));
-        for (int j=0; j < grid->cols; j++)
-            grid->lights[i][j]=0;
+        grid->lights = (int **)malloc(grid->rows * sizeof(int *));
+        for (int i = 0; i < grid->rows; ++i)
+        {
+            grid->lights[i] = (int *)malloc(grid->cols * sizeof(int));
+            for (int j = 0; j < grid->cols; j++)
+                grid->lights[i][j] = 0;
+        }
 
-    }
-
-        for (int i = 0; i < grid->rows; ++i) {
-            for (int j = 0; j < grid->cols; ++j) {
+        for (int i = 0; i < grid->rows; ++i)
+        {
+            for (int j = 0; j < grid->cols; ++j)
+            {
                 fscanf(file, "%d", &(grid->lights[i][j]));
             }
         }
         fclose(file);
-        printw("Game loaded successfully!\n");
-    } else {
-        printw("Error loading game.\n");
+        clear();
+        mvprintw(rowPrompt, colPrompt, "Game loaded successfully!");
+    }
+    else
+    {
+        mvprintw(rowPrompt, colPrompt, "Error loading game.");
     }
     refresh();
 }
@@ -386,19 +432,24 @@ void loadGame(Grid *grid, char *filename) {
  * @param highlight --> int : array with the menu choices
  * @param *choices[] --> char : array with the menu choices (New game, Continue...)
  * @param numChoices --> int
-*/
-void drawMenu(int highlight, char *choices[], int numChoices) {
+ */
+void drawMenu(int highlight, char *choices[], int numChoices)
+{
     int x, y, i;
 
-    x = (COLS - 20) / 2; // Centrer horizontally
+    x = (COLS - 20) / 2;          // Centrer horizontally
     y = (LINES - numChoices) / 2; // Centrer vertically
 
-    for (i = 0; i < numChoices; ++i) {
-        if (highlight == i) {
-            attron(A_REVERSE); //highlight on
+    for (i = 0; i < numChoices; ++i)
+    {
+        if (highlight == i)
+        {
+            attron(A_REVERSE);                   // highlight on
             mvprintw(y, x, " > %s", choices[i]); // Add the spsace before the selected option
-            attroff(A_REVERSE); //highlight off
-        } else {
+            attroff(A_REVERSE);                  // highlight off
+        }
+        else
+        {
             mvprintw(y, x, "   %s", choices[i]); // add the space before the other choices
         }
         ++y;
@@ -415,43 +466,50 @@ void drawMenu(int highlight, char *choices[], int numChoices) {
  * @param *choices[] -> char : array with the menu choices (New game, Continue...)
  * @param numChoices -> int :  choices nulber of the menu
  */
-int showMenu(char *title, char *choices[], int numChoices) {
+int showMenu(char *title, char *choices[], int numChoices)
+{
     int highlight = 0;
     int choice;
     int c;
 
-    do {
+    do
+    {
         clear();
 
-        attron(A_BOLD);  // Activer le texte en gras
+        attron(A_BOLD);                                                                                // Activer le texte en gras
         mvhline((LINES - numChoices) / 2 - 3, (COLS - strlen(title)) / 2 - 2, '-', strlen(title) + 4); // Dessiner la bordure supérieure du titre
-        mvprintw((LINES - numChoices) / 2 - 2, (COLS - strlen(title)) / 2 - 2, "| %s |", title);// Dessiner le titre avec la bordure latérale
-        mvhline((LINES - numChoices) / 2 - 1, (COLS - strlen(title)) / 2 - 2, '-', strlen(title) + 4);// Dessiner la bordure inférieure du titre
-        attroff(A_BOLD);  // desactive le texte en gras
+        mvprintw((LINES - numChoices) / 2 - 2, (COLS - strlen(title)) / 2 - 2, "| %s |", title);       // Dessiner le titre avec la bordure latérale
+        mvhline((LINES - numChoices) / 2 - 1, (COLS - strlen(title)) / 2 - 2, '-', strlen(title) + 4); // Dessiner la bordure inférieure du titre
+        attroff(A_BOLD);                                                                               // desactive le texte en gras
 
         drawMenu(highlight, choices, numChoices);
 
         c = getch();
-        switch (c) {
-            case KEY_UP:
-                if (highlight > 0) {
-                    do {
-                        highlight--;
-                    } while (strlen(choices[highlight]) == 0);  // Ignore les options vides
-                }
-                break;
-            case KEY_DOWN:
-                if (highlight < numChoices - 1) {
-                    do {
-                        highlight++;
-                    } while (strlen(choices[highlight]) == 0);  // Ignore the empty options
-                }
-                break;
-            case 10: // Enter key
-                choice = highlight;
-                break;
-            default:
-                break;
+        switch (c)
+        {
+        case KEY_UP:
+            if (highlight > 0)
+            {
+                do
+                {
+                    highlight--;
+                } while (strlen(choices[highlight]) == 0); // Ignore les options vides
+            }
+            break;
+        case KEY_DOWN:
+            if (highlight < numChoices - 1)
+            {
+                do
+                {
+                    highlight++;
+                } while (strlen(choices[highlight]) == 0); // Ignore the empty options
+            }
+            break;
+        case 10: // Enter key
+            choice = highlight;
+            break;
+        default:
+            break;
         }
 
     } while (c != 10);
@@ -464,7 +522,8 @@ int showMenu(char *title, char *choices[], int numChoices) {
  * @author Hugo
  * @brief show lightsout
  */
-void showTitleScreen() {
+void showTitleScreen()
+{
     clear();
     mvprintw(LINES / 2, (COLS - 10) / 2, "Lights Out");
     refresh();
@@ -477,9 +536,11 @@ void showTitleScreen() {
  * @brief is there a save File?
  * @param *filename -> char : file's name
  */
-bool hasSaveFile(const char *filename) {
+bool hasSaveFile(const char *filename)
+{
     FILE *file = fopen(filename, "r");
-    if (file != NULL) {
+    if (file != NULL)
+    {
         fclose(file);
         return true;
     }

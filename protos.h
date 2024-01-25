@@ -16,6 +16,7 @@ typedef struct {
 
 // Game's prototype functions
 void chooseSize(Grid *grid);
+void chooseCustomSize(Grid *grid);
 void initializeGrid(Grid *grid);
 void initializeCustomGrid(Grid *grid);
 void printGrid(Grid *grid);
