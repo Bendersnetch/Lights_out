@@ -80,6 +80,7 @@ void playGame(Grid *grid)
 
     clear();
     mvprintw(LINES / 2, (COLS - 62) / 2, "Congratulations! You've turned off all the lights in %d moves.", grid->moves);
+    saveScore(grid);
     refresh();
     getch(); // Wait to the user to press a key
 }
@@ -384,6 +385,16 @@ void saveGame(Grid *grid, char *filename)
     refresh();
 }
 
+void saveScore(Grid *grid) {
+    FILE *file = fopen("scoreboard.txt", "a");
+    if (file != NULL) {
+        fprintf(file, "%s %d %d %d\n", grid->playerName, grid->moves, grid->rows, grid->cols);
+        fclose(file);
+    }
+}
+
+
+
 /**
  * Load the game from a file
  * @author Hugo
@@ -425,6 +436,7 @@ void loadGame(Grid *grid, char *filename)
     }
     refresh();
 }
+
 /**
  * Show the menus options and higlight the one selected
  * @author Hugo
@@ -517,6 +529,48 @@ int showMenu(char *title, char *choices[], int numChoices)
     return choice;
 }
 
+void showScoreboard() {
+    clear();
+    mvprintw(1, (COLS - 15) / 2, "=== Scoreboard ===");
+    //mvprintw(3, (COLS - 20) / 2, "Player   Moves   Grid Size");
+    FILE *file = fopen("scoreboard.txt", "r");
+    if (file != NULL) {
+        int row = 5;
+        char line[100];
+        int taille = 3;
+
+        char *title = "Player   Moves   Grid Size";
+        attron(A_BOLD);                                                                                // Activer le texte en gras
+        mvhline(taille, (COLS - strlen(title)) / 2 - 2, '-', strlen(title) + 4); // Dessiner la bordure supérieure du titre
+        mvprintw(taille + 1, (COLS - strlen(title)) / 2 - 2, "| %s |", title);       // Dessiner le titre avec la bordure latérale
+        mvhline(taille + 2, (COLS - strlen(title)) / 2 - 2, '-', strlen(title) + 4); // Dessiner la bordure inférieure du titre
+        attroff(A_BOLD); 
+
+        while (fgets(line, sizeof(line), file) != NULL) {
+            // Split the line into name, moves, and size
+            char playerName[50];
+            int moves, cols, rows;  
+            sscanf(line, "%s %d %d %d", playerName, &moves, &cols, &rows);
+            mvprintw(row + 1, (COLS - 25) / 2, "%s", playerName);
+            mvprintw(row + 1, (COLS - 5) / 2, "%d", moves, cols, rows);
+            mvprintw(row + 1, (COLS + 10) / 2, "%dx%d", cols, rows);
+
+
+            row++;
+        }
+
+        fclose(file);  
+    } else {
+        mvprintw(3, (COLS - 30) / 2, "No scores available.");
+    }
+
+    mvprintw(LINES - 1, 0, "Press any key to return to the menu.");
+    refresh();
+    getch(); // Attend que l'utilisateur appuie sur une touche
+
+}
+
+
 /**
  * Show 'lightsout' n the middle of a screen
  * @author Hugo
@@ -526,9 +580,22 @@ void showTitleScreen()
 {
     clear();
     mvprintw(LINES / 2, (COLS - 10) / 2, "Lights Out");
+    mvprintw(LINES / 2 + 2, (COLS - 22) / 2, "Press any key to start...");
     refresh();
     getch();
 }
+
+void getPlayerName(Grid *grid) {
+    clear();
+    mvprintw(LINES / 2, (COLS - 30) / 2, "Enter your name and press Enter:");
+    refresh();
+    echo();
+    curs_set(1);
+    getnstr(grid->playerName, sizeof(grid->playerName));
+    curs_set(0);
+    noecho();
+}
+
 
 /**
  * checks if there is a save file (tells if we have to show continue in the menu)

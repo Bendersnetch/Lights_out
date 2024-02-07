@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <wchar.h>
-#include <curses.h>
+#include <ncurses.h>
 #include <unistd.h>
 #include <strings.h>
 #include <sys/stat.h>
@@ -23,6 +23,15 @@ void playGame(Grid *grid);
 
 int main()
 {
+ // Initialize the grid with malloc
+    Grid *grid = (Grid *)malloc(sizeof(Grid));
+    if (grid == NULL)
+    {
+        perror("Error while allocating memory");
+        endwin();
+        return 1;
+    }
+
     srand(time(NULL));
 
     initscr(); // Initialize curses library
@@ -34,8 +43,12 @@ int main()
 
     int choice;
     char filename[50];
+    char playerName[50];
 
     showTitleScreen();
+    getPlayerName(grid);
+
+    
 
     char *menuChoices[] = {
         "New game",
@@ -43,18 +56,10 @@ int main()
         "Load game",
         "Continue game",
         "Save Game",
+        "Show Scoreboard",
         "Leave"};
 
-    int numMenuChoices = sizeof(menuChoices) / sizeof(menuChoices[0]);
-
-    // Initialize the grid with malloc
-    Grid *grid = (Grid *)malloc(sizeof(Grid));
-    if (grid == NULL)
-    {
-        perror("Error while allocating memory");
-        endwin();
-        return 1;
-    }
+    int numMenuChoices = sizeof(menuChoices) / sizeof(menuChoices[0]);   
 
     do
     {
@@ -116,8 +121,11 @@ int main()
                 saveGame(grid, filename);
                 break;
             }
+        case 5: // Show Scoreboard
+            showScoreboard();
+            break;
 
-        case 5: // Quit
+        case 6: // Quit
             break;
 
         default:
